@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Arandu ERP: sistema de gestión empresarial simplificado. Proyecto de Ingeniería en Sistemas para Expotecnia." />
+    <title>Arandu ERP · Expotecnia</title>
+    <script>
+      // Aplica el tema guardado antes del primer render para evitar el "flash" de tema incorrecto.
+      (function () {
+        try {
+          var saved = localStorage.getItem('erp.theme');
+          var dark = saved ? saved === 'dark' : window.matchMedia('(prefers-color-scheme: dark)').matches;
+          if (dark) document.documentElement.classList.add('dark');
+        } catch (e) {}
+      })();
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
+</html>
