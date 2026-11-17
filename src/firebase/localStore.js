@@ -7,7 +7,12 @@ const LATENCY = 450 // ms: simula la primera carga para que se vean los skeleton
 
 const memory = new Map() // nombre de colección → array de documentos
 const listeners = new Map() // nombre de colección → Set de callbacks
-const channel = typeof BroadcastChannel !== 'undefined' ? new BroadcastChannel('erp-local-db') : null
+let channel = null
+try {
+  channel = typeof BroadcastChannel !== 'undefined' ? new BroadcastChannel('erp-local-db') : null
+} catch {
+  /* contexto sin permiso para BroadcastChannel: no hay sincronización entre pestañas */
+}
 
 const read = (name) => {
   if (!memory.has(name)) {
@@ -85,7 +90,22 @@ export const wasSeeded = () => {
   try {
     return localStorage.getItem(SEEDED_KEY) === '1'
   } catch {
-    return true
+    return false // sin almacenamiento: se cargan los datos de demo en memoria
+  }
+}
+const BASE_KEY = `${PREFIX}__base`
+export const baseWasSeeded = () => {
+  try {
+    return localStorage.getItem(BASE_KEY) === '1'
+  } catch {
+    return false
+  }
+}
+export const markBaseSeeded = () => {
+  try {
+    localStorage.setItem(BASE_KEY, '1')
+  } catch {
+    /* noop */
   }
 }
 export const markSeeded = () => {

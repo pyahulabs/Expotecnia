@@ -3,9 +3,21 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useState } 
 const ThemeContext = createContext({ theme: 'light', toggleTheme: () => {}, setTheme: () => {} })
 const STORAGE_KEY = 'erp.theme'
 
+/** Tema que pide el entorno: atributo data-theme del visor o, si no hay, el del sistema operativo. */
+const hostTheme = () => {
+  const attr = document.documentElement.getAttribute('data-theme')
+  if (attr === 'dark' || attr === 'light') return attr
+  return window.matchMedia?.('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
+}
+
 const getInitialTheme = () => {
-  if (typeof document !== 'undefined' && document.documentElement.classList.contains('dark')) return 'dark'
-  return 'light'
+  try {
+    const saved = localStorage.getItem(STORAGE_KEY)
+    if (saved === 'dark' || saved === 'light') return saved
+  } catch {
+    /* almacenamiento no disponible */
+  }
+  return hostTheme()
 }
 
 export function ThemeProvider({ children }) {
@@ -31,6 +43,19 @@ export function ThemeProvider({ children }) {
   }, [])
 
   const toggleTheme = useCallback(() => setTheme(theme === 'dark' ? 'light' : 'dark'), [theme, setTheme])
+
+  // Si el visor o el sistema cambian de tema mientras la app está abierta, se los sigue
+  useEffect(() => {
+    const follow = () => setTheme(hostTheme())
+    const observer = new MutationObserver(follow)
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] })
+    const media = window.matchMedia?.('(prefers-color-scheme: dark)')
+    media?.addEventListener?.('change', follow)
+    return () => {
+      observer.disconnect()
+      media?.removeEventListener?.('change', follow)
+    }
+  }, [setTheme])
 
   const value = useMemo(() => ({ theme, setTheme, toggleTheme }), [theme, setTheme, toggleTheme])
   return <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>

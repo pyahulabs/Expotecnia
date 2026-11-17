@@ -9,6 +9,9 @@ import { projectId } from '@/firebase/config'
 import { cn } from '@/lib/cn'
 import { ease } from '@/lib/motion'
 
+// Solo los 7 módulos del ERP (no Usuarios ni Documentación)
+const MODULOS = NAV_ITEMS.filter((item) => item.modulo)
+
 // Qué colecciones de Firestore usa cada módulo
 const COLECCIONES_POR_MODULO = {
   '/': ['actividad', '+ lectura de todas'],
@@ -161,7 +164,7 @@ export function StackDiagram() {
 
         {/* Abanico hacia los módulos (escritorio) */}
         <svg viewBox="0 0 700 72" preserveAspectRatio="none" className="hidden h-[72px] w-full lg:block" aria-hidden="true">
-          {NAV_ITEMS.map((item, i) => {
+          {MODULOS.map((item, i) => {
             const x = i * 100 + 50
             const d = `M350,0 C350,44 ${x},30 ${x},72`
             return (
@@ -180,7 +183,7 @@ export function StackDiagram() {
         <div className="relative w-full">
           <p className="mb-3 text-center text-[10px] font-bold uppercase tracking-[0.09em] text-fg-subtle lg:hidden">3 · Módulos del ERP</p>
           <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-7">
-            {NAV_ITEMS.map((item, i) => {
+            {MODULOS.map((item, i) => {
               const colecciones = COLECCIONES_POR_MODULO[item.path] || []
               const docs = colecciones.reduce((n, c) => n + (conteos[c] || 0), 0)
               return (

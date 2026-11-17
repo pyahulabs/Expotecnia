@@ -1,14 +1,16 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { Navigate, useLocation, useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { ArrowRight, Lock, Mail, Radio, ShieldCheck, SlidersHorizontal, TrendingUp, User } from 'lucide-react'
+import { ArrowLeft, ArrowRight, Eye, Mail, Radio, ShieldCheck, SlidersHorizontal, TrendingUp, User, UserPlus } from 'lucide-react'
 import { BRAND } from '@/config/brand'
 import { useSession } from '@/context/SessionContext'
 import { ease, fadeUp, stagger } from '@/lib/motion'
-import { Button, Field, Input, ThemeToggle } from '@/components/ui'
+import { Avatar, Badge, Button, Field, Input, Loading, Skeleton, ThemeToggle } from '@/components/ui'
+import { COLECCIONES, ROLES } from '@/config/constants'
+import { addItem, logActivity, useCollection } from '@/firebase/hooks'
+import { emailEnUso } from '@/modules/usuarios/reglas'
+import { useCambiarUsuario } from '@/lib/useCambiarUsuario'
 import { Logo, LogoMark } from '@/components/layout/Logo'
-
-const DEMO_USER = { nombre: 'María José Benítez', email: 'maria.benitez@yvoty.com.py' }
 
 const FEATURES = [
   { icon: Radio, title: 'Tiempo real', text: 'Cada cambio se sincroniza al instante con Firestore.' },
@@ -89,32 +91,54 @@ function FloatingPreview() {
   )
 }
 
-/** Pantalla de bienvenida con acceso SIMULADO (no valida credenciales). */
+/** Pantalla de bienvenida con acceso SIMULADO: se elige un usuario existente o se crea uno nuevo. */
 export default function LoginPage() {
   const { user, login } = useSession()
   const navigate = useNavigate()
   const location = useLocation()
-  const [form, setForm] = useState(DEMO_USER)
-  const [loading, setLoading] = useState(false)
+  const { data: usuarios, loading } = useCollection(COLECCIONES.usuarios, { orderBy: 'nombre' })
+  const cambiarUsuario = useCambiarUsuario({ silencioso: true })
+  const [entrando, setEntrando] = useState(false)
+  const [creando, setCreando] = useState(false)
+  const [form, setForm] = useState({ nombre: '', email: '' })
+  const [errors, setErrors] = useState({})
 
-  if (user && !loading) return <Navigate to="/" replace />
+  const activos = useMemo(() => usuarios.filter((u) => u.estado !== 'Inactivo'), [usuarios])
+  const sinUsuarios = !loading && usuarios.length === 0
+  const mostrandoForm = creando || sinUsuarios
 
-  const enter = (data) => {
-    setLoading(true)
+  if (user && !entrando) return <Navigate to="/" replace />
+
+  const entrar = (accion) => {
+    setEntrando(true)
     // Pequeña espera para que se perciba la transición de ingreso
     window.setTimeout(() => {
-      login(data)
+      accion()
       navigate(location.state?.from || '/', { replace: true })
-    }, 650)
+    }, 550)
   }
 
-  const onSubmit = (event) => {
+  const crearUsuario = (event) => {
     event.preventDefault()
-    enter(form)
+    const next = {}
+    if (!form.nombre.trim()) next.nombre = 'Ingresá tu nombre.'
+    if (!form.email.trim()) next.email = 'Ingresá tu correo.'
+    else if (!/^\S+@\S+\.\S+$/.test(form.email.trim())) next.email = 'El correo no tiene un formato válido.'
+    else if (emailEnUso(usuarios, form.email)) next.email = 'Ya existe un usuario con ese correo: elegilo en la lista.'
+    setErrors(next)
+    if (Object.keys(next).length) return
+    // La primera persona en entrar queda como Administrador; las demás, como Editor
+    const rol = usuarios.length === 0 ? 'Administrador' : 'Editor'
+    const datos = { nombre: form.nombre.trim(), email: form.email.trim(), cargo: '', rol, estado: 'Activo', ultimoAcceso: Date.now() }
+    entrar(() => {
+      const id = addItem(COLECCIONES.usuarios, datos)
+      login({ ...datos, id })
+      logActivity('Usuarios', `se registró como nuevo usuario (${rol})`, 'crear')
+    })
   }
 
   return (
-    <div className="grid grid-cols-1 min-h-dvh bg-canvas lg:grid-cols-[1.08fr_1fr]">
+    <div className="grid min-h-dvh grid-cols-1 bg-canvas lg:grid-cols-[minmax(0,1.08fr)_minmax(0,1fr)]">
       {/* Panel de marca */}
       <section className="relative hidden overflow-hidden bg-[#1a1447] lg:flex lg:flex-col lg:justify-between lg:p-12 xl:p-16">
         <div className="absolute inset-0" aria-hidden="true">
@@ -166,7 +190,7 @@ export default function LoginPage() {
         </motion.ul>
       </section>
 
-      {/* Formulario */}
+      {/* Ingreso */}
       <section className="relative flex flex-col px-5 py-6 sm:px-10">
         <div className="pointer-events-none absolute inset-x-0 top-0 h-72 bg-[radial-gradient(60%_100%_at_50%_0%,var(--primary-soft),transparent)] lg:hidden" aria-hidden="true" />
         <div className="relative flex items-center justify-between">
@@ -174,42 +198,80 @@ export default function LoginPage() {
           <ThemeToggle />
         </div>
 
-        <motion.div
-          className="relative mx-auto flex w-full max-w-[400px] flex-1 flex-col justify-center py-10"
-          variants={stagger(0.07)}
-          initial="hidden"
-          animate="show"
-        >
+        <motion.div className="relative mx-auto flex w-full max-w-[420px] flex-1 flex-col justify-center py-10" variants={stagger(0.07)} initial="hidden" animate="show">
           <motion.div variants={fadeUp}>
             <h2 className="text-[28px] font-semibold leading-9 tracking-[-0.025em] text-fg">Te damos la bienvenida</h2>
             <p className="mt-2 text-sm leading-6 text-fg-muted">
-              Ingresá para ver el panel de <span className="font-medium text-fg">{BRAND.organizacion}</span>
+              {mostrandoForm ? 'Registrá tu usuario para empezar a usar el sistema.' : <>Elegí con qué usuario querés ingresar al panel de <span className="font-medium text-fg">{BRAND.organizacion}</span></>}
             </p>
           </motion.div>
 
-          <motion.form variants={fadeUp} onSubmit={onSubmit} className="mt-8 space-y-4" noValidate>
-            <Field label="Nombre" htmlFor="login-nombre">
-              <Input id="login-nombre" icon={User} autoComplete="name" value={form.nombre} onChange={(e) => setForm({ ...form, nombre: e.target.value })} placeholder="Tu nombre" className="h-11" />
-            </Field>
-            <Field label="Correo electrónico" htmlFor="login-email">
-              <Input id="login-email" icon={Mail} type="email" autoComplete="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} placeholder="nombre@empresa.com.py" className="h-11" />
-            </Field>
-            <Field label="Contraseña" htmlFor="login-pass" hint="Acceso simulado para la feria: no se valida la contraseña.">
-              <Input id="login-pass" icon={Lock} type="password" defaultValue="expotecnia" autoComplete="off" className="h-11" />
-            </Field>
-            <Button type="submit" size="lg" loading={loading} iconRight={ArrowRight} className="mt-2 w-full">
-              {loading ? 'Ingresando…' : 'Ingresar al sistema'}
-            </Button>
-          </motion.form>
+          {mostrandoForm ? (
+            <motion.form variants={fadeUp} onSubmit={crearUsuario} className="mt-8 space-y-4" noValidate>
+              {sinUsuarios && (
+                <p className="rounded-xl bg-info-soft px-3.5 py-3 text-[13px] leading-5 text-info-text">Todavía no hay usuarios: el primero que se registre queda como <span className="font-semibold">Administrador</span>.</p>
+              )}
+              <Field label="Nombre" htmlFor="login-nombre" error={errors.nombre}>
+                <Input id="login-nombre" icon={User} autoComplete="name" value={form.nombre} onChange={(e) => setForm({ ...form, nombre: e.target.value })} placeholder="Tu nombre y apellido" className="h-11" invalid={!!errors.nombre} maxLength={80} />
+              </Field>
+              <Field label="Correo electrónico" htmlFor="login-email" error={errors.email} hint="Acceso simulado para la feria: no se pide contraseña.">
+                <Input id="login-email" icon={Mail} type="email" autoComplete="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} placeholder="nombre@empresa.com.py" className="h-11" invalid={!!errors.email} />
+              </Field>
+              <Button type="submit" size="lg" loading={entrando} iconRight={ArrowRight} className="mt-2 w-full">
+                {entrando ? 'Ingresando…' : 'Crear usuario e ingresar'}
+              </Button>
+              {!sinUsuarios && (
+                <Button variant="ghost" size="lg" icon={ArrowLeft} className="w-full" disabled={entrando} onClick={() => { setCreando(false); setErrors({}) }}>
+                  Volver a la lista de usuarios
+                </Button>
+              )}
+            </motion.form>
+          ) : (
+            <motion.div variants={fadeUp} className="mt-8">
+              {loading ? (
+                <Loading label="Cargando usuarios…">
+                  <div className="space-y-2.5">
+                    {[0, 1, 2, 3].map((i) => (
+                      <Skeleton key={i} className="h-[62px] w-full rounded-xl" />
+                    ))}
+                  </div>
+                </Loading>
+              ) : (
+                <ul className="max-h-[430px] space-y-2 overflow-y-auto pr-1" aria-label="Usuarios disponibles">
+                  {activos.map((u) => (
+                    <li key={u.id}>
+                      <button
+                        type="button"
+                        disabled={entrando}
+                        onClick={() => entrar(() => cambiarUsuario(u))}
+                        className="group flex w-full items-center gap-3 rounded-xl border border-line bg-surface px-3.5 py-3 text-left shadow-card transition-[border-color,box-shadow,transform] duration-150 hover:-translate-y-0.5 hover:border-primary/50 hover:shadow-raised disabled:cursor-not-allowed disabled:opacity-60"
+                      >
+                        <Avatar name={u.nombre} />
+                        <span className="min-w-0 flex-1">
+                          <span className="block truncate text-sm font-semibold text-fg">{u.nombre}</span>
+                          <span className="block truncate text-xs text-fg-subtle">{u.cargo || u.email}</span>
+                        </span>
+                        <Badge tone={ROLES[u.rol]?.tone || 'neutral'} size="sm">
+                          {u.rol}
+                        </Badge>
+                        <ArrowRight size={16} className="shrink-0 text-fg-subtle transition-transform group-hover:translate-x-0.5 group-hover:text-primary-text" aria-hidden="true" />
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              )}
 
-          <motion.div variants={fadeUp} className="mt-4">
-            <div className="flex items-center gap-3 py-2 text-xs text-fg-subtle">
-              <span className="h-px flex-1 bg-line" />o<span className="h-px flex-1 bg-line" />
-            </div>
-            <Button variant="secondary" size="lg" className="mt-2 w-full" disabled={loading} onClick={() => enter({ nombre: 'Invitado', email: 'invitado@arandu.com.py', rol: 'Visitante' })}>
-              Entrar como invitado
-            </Button>
-          </motion.div>
+              <div className="mt-5 grid grid-cols-1 gap-2.5 sm:grid-cols-2">
+                <Button variant="secondary" size="lg" icon={UserPlus} disabled={entrando || loading} onClick={() => setCreando(true)}>
+                  Nuevo usuario
+                </Button>
+                <Button variant="secondary" size="lg" icon={Eye} disabled={entrando} onClick={() => entrar(() => login({ nombre: 'Invitado', email: 'invitado@arandu.com.py', rol: 'Lector' }))}>
+                  Entrar como invitado
+                </Button>
+              </div>
+              <p className="mt-4 text-center text-xs text-fg-subtle">Acceso simulado para la feria: no se pide contraseña.</p>
+            </motion.div>
+          )}
         </motion.div>
 
         <p className="relative text-center text-xs text-fg-subtle">

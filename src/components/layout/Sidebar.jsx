@@ -82,14 +82,16 @@ function NavItem({ item, collapsed, onNavigate, layoutScope }) {
           {!collapsed && (
             <>
               <span className="relative flex-1 truncate">{item.label}</span>
-              <span
-                className={cn(
-                  'relative rounded-md px-1.5 py-px text-[10px] font-semibold tracking-wide',
-                  isActive ? 'bg-surface/70 text-primary-text' : 'bg-surface-2 text-fg-subtle group-hover:bg-surface-3',
-                )}
-              >
-                {item.unidad}
-              </span>
+              {item.unidad && (
+                <span
+                  className={cn(
+                    'relative rounded-md px-1.5 py-px text-[10px] font-semibold tracking-wide',
+                    isActive ? 'bg-surface/70 text-primary-text' : 'bg-surface-2 text-fg-subtle group-hover:bg-surface-3',
+                  )}
+                >
+                  {item.unidad}
+                </span>
+              )}
             </>
           )}
         </>
@@ -98,7 +100,7 @@ function NavItem({ item, collapsed, onNavigate, layoutScope }) {
   )
   if (!collapsed) return link
   return (
-    <Tooltip content={`${item.label} · ${item.unidad}`} side="right" className="w-full">
+    <Tooltip content={item.unidad ? `${item.label} · ${item.unidad}` : item.label} side="right" className="w-full">
       {link}
     </Tooltip>
   )

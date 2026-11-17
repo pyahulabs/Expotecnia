@@ -37,6 +37,8 @@ export const COLECCIONES = {
   tareas: 'tareas',
   fases: 'fases',
   actividad: 'actividad',
+  empresas: 'empresas',
+  usuarios: 'usuarios',
   test: 'test_collection',
 }
 
@@ -61,9 +63,18 @@ export const CRITERIOS_DESEMPENO = [
   { id: 'iniciativa', label: 'Iniciativa', descripcion: 'Propone mejoras' },
 ]
 
-// Empresas ficticias para practicar la matriz FODA.
+// Roles de usuario. Hoy el rol controla la gestión de usuarios (solo Administrador);
+// el resto de los permisos se aplicará cuando se sume autenticación real y reglas de Firestore.
+export const ROLES = {
+  Administrador: { tone: 'primary', descripcion: 'Gestiona usuarios y empresas, y trabaja en todos los módulos.' },
+  Editor: { tone: 'info', descripcion: 'Crea y modifica registros en los módulos.' },
+  Lector: { tone: 'neutral', descripcion: 'Consulta la información sin modificar la configuración.' },
+}
+export const LISTA_ROLES = Object.keys(ROLES)
+
+// Empresas de ejemplo para practicar la matriz FODA (se cargan con los datos de demo).
 export const EMPRESAS = [
-  { id: 'yvoty', nombre: 'Yvoty Alimentos S.A.', rubro: 'Industria alimenticia', ciudad: 'Luque' },
-  { id: 'tecnopar', nombre: 'TecnoPar Soluciones S.R.L.', rubro: 'Desarrollo de software', ciudad: 'Asunción' },
-  { id: 'nanduti', nombre: 'Transportes Ñandutí S.A.', rubro: 'Logística y transporte', ciudad: 'Ciudad del Este' },
+  { id: 'yvoty', nombre: 'Yvoty Alimentos S.A.', rubro: 'Industria alimenticia', ciudad: 'Luque', descripcion: 'Elaboración y distribución de yerba mate, harinas y snacks con presencia en todo el país.' },
+  { id: 'tecnopar', nombre: 'TecnoPar Soluciones S.R.L.', rubro: 'Desarrollo de software', ciudad: 'Asunción', descripcion: 'Fábrica de software a medida para cooperativas y pymes.' },
+  { id: 'nanduti', nombre: 'Transportes Ñandutí S.A.', rubro: 'Logística y transporte', ciudad: 'Ciudad del Este', descripcion: 'Transporte de cargas por ruta en la región de la triple frontera.' },
 ]

@@ -1,14 +1,15 @@
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import { motion } from 'framer-motion'
-import { Building2, MapPin } from 'lucide-react'
+import { Building2, MapPin, Pencil, Plus } from 'lucide-react'
 import { PageHeader } from '@/components/layout/PageHeader'
-import { Card, Select, Tooltip, toast } from '@/components/ui'
-import { COLECCIONES, EMPRESAS } from '@/config/constants'
+import { Button, Card, ConfirmDialog, EmptyState, IconButton, Select, Skeleton, Tooltip, toast } from '@/components/ui'
+import { COLECCIONES } from '@/config/constants'
 import { logActivity, useCollection } from '@/firebase/hooks'
 import { useLocalStorage } from '@/lib/useLocalStorage'
 import { fadeUp, stagger } from '@/lib/motion'
 import { CUADRANTES } from './foda'
 import { FodaQuadrant } from './FodaQuadrant'
+import { EmpresaModal } from './EmpresaModal'
 
 /** Barra segmentada: cuánto pesa cada cuadrante en la matriz. */
 function Distribucion({ conteo, total }) {
@@ -40,15 +41,21 @@ function EjeLabel({ children, className }) {
 }
 
 export default function PlaneacionPage() {
-  const { data, loading, add, update, remove } = useCollection(COLECCIONES.foda)
-  const [empresaId, setEmpresaId] = useLocalStorage('erp.foda.empresa', EMPRESAS[0].id)
-  const empresa = EMPRESAS.find((e) => e.id === empresaId) || EMPRESAS[0]
+  const { data, loading: cargandoItems, add, update, remove } = useCollection(COLECCIONES.foda)
+  const empresas = useCollection(COLECCIONES.empresas)
+  const [empresaId, setEmpresaId] = useLocalStorage('erp.foda.empresa', '')
+  const [modal, setModal] = useState({ open: false, empresa: null })
+  const [aEliminar, setAEliminar] = useState(null)
+
+  const loading = cargandoItems || empresas.loading
+  // Si la empresa elegida ya no existe (se borró), se muestra la primera de la lista
+  const empresa = empresas.data.find((e) => e.id === empresaId) || empresas.data[0] || null
 
   const porTipo = useMemo(() => {
     const grupos = Object.fromEntries(CUADRANTES.map((c) => [c.tipo, []]))
-    data.filter((item) => item.empresaId === empresa.id).forEach((item) => grupos[item.tipo]?.push(item))
+    data.filter((item) => item.empresaId === empresa?.id).forEach((item) => grupos[item.tipo]?.push(item))
     return grupos
-  }, [data, empresa.id])
+  }, [data, empresa?.id])
 
   const conteo = Object.fromEntries(CUADRANTES.map((c) => [c.tipo, porTipo[c.tipo].length]))
   const total = Object.values(conteo).reduce((a, b) => a + b, 0)
@@ -70,6 +77,29 @@ export default function PlaneacionPage() {
     toast.info('Ítem eliminado', item.texto)
   }
 
+  const guardarEmpresa = (valores, original) => {
+    if (original) {
+      empresas.update(original.id, valores)
+      logActivity('Planeación', `actualizó los datos de la empresa ${valores.nombre}`, 'editar')
+      toast.success('Empresa actualizada', valores.nombre)
+    } else {
+      const id = empresas.add(valores)
+      setEmpresaId(id)
+      logActivity('Planeación', `agregó la empresa ${valores.nombre} para analizar su FODA`, 'crear')
+      toast.success('Empresa creada', `${valores.nombre} ya está seleccionada: completá su matriz FODA.`)
+    }
+  }
+
+  // Al borrar una empresa también se borran los ítems de su matriz FODA
+  const eliminarEmpresa = (original) => {
+    data.filter((item) => item.empresaId === original.id).forEach((item) => remove(item.id))
+    empresas.remove(original.id)
+    logActivity('Planeación', `eliminó la empresa ${original.nombre} y su matriz FODA`, 'eliminar')
+    toast.info('Empresa eliminada', original.nombre)
+  }
+
+  const itemsDe = (id) => data.filter((item) => item.empresaId === id).length
+
   return (
     <>
       <PageHeader
@@ -77,21 +107,40 @@ export default function PlaneacionPage() {
         title="Matriz FODA"
         description="Analizá la situación de una empresa: factores internos y externos, positivos y negativos."
         actions={
-          <div className="w-full sm:w-72">
-            <label htmlFor="empresa" className="sr-only">
-              Empresa de prueba
-            </label>
-            <Select
-              id="empresa"
-              icon={Building2}
-              value={empresa.id}
-              onChange={(e) => setEmpresaId(e.target.value)}
-              options={EMPRESAS.map((e) => ({ value: e.id, label: e.nombre }))}
-            />
-          </div>
+          <>
+            {empresa && (
+              <div className="w-full sm:w-72">
+                <label htmlFor="empresa" className="sr-only">
+                  Empresa
+                </label>
+                <Select id="empresa" icon={Building2} value={empresa.id} onChange={(e) => setEmpresaId(e.target.value)} options={empresas.data.map((e) => ({ value: e.id, label: e.nombre }))} />
+              </div>
+            )}
+            <Button icon={Plus} onClick={() => setModal({ open: true, empresa: null })}>
+              Nueva empresa
+            </Button>
+          </>
         }
       />
 
+      {!empresa ? (
+        loading ? (
+          <Skeleton className="h-96 w-full rounded-2xl" />
+        ) : (
+          <Card>
+            <EmptyState
+              icon={Building2}
+              title="Todavía no hay empresas"
+              description="Creá la primera empresa para armar su matriz FODA, o cargá los datos de demo desde el dashboard."
+              action={
+                <Button icon={Plus} onClick={() => setModal({ open: true, empresa: null })}>
+                  Nueva empresa
+                </Button>
+              }
+            />
+          </Card>
+        )
+      ) : (
       <motion.div variants={stagger(0.07)} initial="hidden" animate="show" className="space-y-4 lg:space-y-6">
         <Card variants={fadeUp} className="flex flex-col gap-5 p-5 sm:flex-row sm:items-center sm:justify-between sm:p-6">
           <div className="flex min-w-0 items-center gap-4">
@@ -99,16 +148,20 @@ export default function PlaneacionPage() {
               <Building2 size={22} aria-hidden="true" />
             </span>
             <div className="min-w-0">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-fg-subtle">Empresa de prueba</p>
+              <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-fg-subtle">Empresa analizada</p>
               <h2 className="truncate text-lg font-semibold tracking-[-0.01em] text-fg">{empresa.nombre}</h2>
               <p className="flex flex-wrap items-center gap-x-3 text-[13px] text-fg-muted">
                 {empresa.rubro}
-                <span className="inline-flex items-center gap-1">
-                  <MapPin size={13} aria-hidden="true" />
-                  {empresa.ciudad}
-                </span>
+                {empresa.ciudad && (
+                  <span className="inline-flex items-center gap-1">
+                    <MapPin size={13} aria-hidden="true" />
+                    {empresa.ciudad}
+                  </span>
+                )}
               </p>
+              {empresa.descripcion && <p className="mt-1 line-clamp-2 max-w-xl text-xs leading-5 text-fg-subtle">{empresa.descripcion}</p>}
             </div>
+            <IconButton icon={Pencil} label={`Editar ${empresa.nombre}`} variant="secondary" size="sm" className="shrink-0 self-start" onClick={() => setModal({ open: true, empresa })} />
           </div>
           <Distribucion conteo={conteo} total={total} />
         </Card>
@@ -141,6 +194,24 @@ export default function PlaneacionPage() {
           ))}
         </div>
       </motion.div>
+      )}
+
+      <EmpresaModal
+        open={modal.open}
+        empresa={modal.empresa}
+        existentes={empresas.data}
+        cantidadItems={modal.empresa ? itemsDe(modal.empresa.id) : 0}
+        onClose={() => setModal((m) => ({ ...m, open: false }))}
+        onSave={guardarEmpresa}
+        onDelete={(e) => setAEliminar(e)}
+      />
+      <ConfirmDialog
+        open={!!aEliminar}
+        onClose={() => setAEliminar(null)}
+        onConfirm={() => eliminarEmpresa(aEliminar)}
+        title={`¿Eliminar ${aEliminar?.nombre}?`}
+        description={`Se borra la empresa y los ${aEliminar ? itemsDe(aEliminar.id) : 0} ítems de su matriz FODA. Esta acción no se puede deshacer.`}
+      />
     </>
   )
 }

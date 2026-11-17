@@ -1,10 +1,10 @@
 // Datos de demostración (contexto paraguayo) para que la app se vea completa.
 // Los ids son fijos: volver a cargar el seed restablece estos documentos sin duplicarlos.
 
-import { CLIMA_PREGUNTAS, COLECCIONES, CRITERIOS_DESEMPENO } from '@/config/constants'
+import { CLIMA_PREGUNTAS, COLECCIONES, CRITERIOS_DESEMPENO, EMPRESAS } from '@/config/constants'
 import { addDays, toISODate } from '@/lib/format'
 import { clearCollections, dataMode, setMany } from './hooks'
-import { markSeeded, wasSeeded } from './localStore'
+import { baseWasSeeded, markBaseSeeded, markSeeded, wasSeeded } from './localStore'
 
 // Generador pseudoaleatorio con semilla: siempre produce los mismos datos.
 const mulberry32 = (seed) => () => {
@@ -182,11 +182,43 @@ const ACTIVIDAD = [
   ['Proyectos', 'completó la fase «Desarrollo del núcleo»', 'mover', 'Derlis Ayala', 8 * 24 * HORA],
 ]
 
+// Usuarios del sistema: [id, nombre, cargo, rol, estado]
+const USUARIOS = [
+  ['usr-01', 'María José Benítez', 'Gerente General', 'Administrador', 'Activo'],
+  ['usr-02', 'Derlis Ayala', 'Jefe de Tecnología', 'Administrador', 'Activo'],
+  ['usr-03', 'Carlos Giménez', 'Jefe de Finanzas', 'Editor', 'Activo'],
+  ['usr-04', 'Nathalia Duarte', 'Jefa de Talento Humano', 'Editor', 'Activo'],
+  ['usr-05', 'Gloria Ortiz', 'Jefa de Calidad', 'Editor', 'Activo'],
+  ['usr-06', 'Andrea Galeano', 'Jefa Comercial', 'Lector', 'Activo'],
+  ['usr-07', 'Óscar Cabañas', 'Analista de Soporte', 'Lector', 'Inactivo'],
+]
+
+const slugEmail = (text) => text.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, '.').replace(/^\.|\.$/g, '')
+
+/** Empresas de ejemplo (Planeación) y usuarios (Usuarios): la base para poder ingresar y trabajar. */
+export function buildBaseData() {
+  const now = Date.now()
+  const items = []
+  EMPRESAS.forEach((empresa, i) => {
+    const { id, ...data } = empresa
+    items.push({ name: COLECCIONES.empresas, id, data: { ...data, createdAt: now - (EMPRESAS.length - i) * MIN } })
+  })
+  USUARIOS.forEach(([id, nombre, cargo, rol, estado], i) => {
+    const partes = nombre.split(' ')
+    items.push({
+      name: COLECCIONES.usuarios,
+      id,
+      data: { nombre, cargo, rol, estado, email: `${slugEmail(partes[0])}.${slugEmail(partes[partes.length - 1])}@yvoty.com.py`, createdAt: now - (USUARIOS.length - i) * HORA },
+    })
+  })
+  return items
+}
+
 /** Arma la lista completa de documentos: [{ name, id, data }] */
 export function buildDemoData() {
   const now = Date.now()
   const random = mulberry32(2026)
-  const items = []
+  const items = [...buildBaseData()]
   const push = (name, id, data) => items.push({ name, id, data })
   const slug = (text) =>
     text.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, '.').replace(/^\.|\.$/g, '')
@@ -313,6 +345,8 @@ export function buildDemoData() {
 
 /** Colecciones que maneja el seed (no incluye test_collection). */
 export const COLECCIONES_DEMO = [
+  COLECCIONES.empresas,
+  COLECCIONES.usuarios,
   COLECCIONES.empleados,
   COLECCIONES.evaluaciones,
   COLECCIONES.clima,
@@ -330,17 +364,26 @@ export async function seedDemoData() {
   const items = buildDemoData()
   await setMany(items)
   markSeeded()
+  markBaseSeeded()
   return items.length
 }
 
 /** Borra todos los datos de las colecciones del ERP. */
 export async function clearDemoData() {
-  await clearCollections(COLECCIONES_DEMO)
+  // Los usuarios y las empresas se conservan: sin usuarios no habría con quién ingresar
+  await clearCollections(COLECCIONES_DEMO.filter((c) => c !== COLECCIONES.usuarios && c !== COLECCIONES.empresas))
   markSeeded()
 }
 
 /** En modo local, la primera vez se cargan los datos solos para que la demo arranque completa. */
 export function autoSeedIfNeeded() {
-  if (dataMode !== 'local' || wasSeeded()) return
-  seedDemoData().catch(() => {})
+  if (dataMode !== 'local') return
+  if (!wasSeeded()) {
+    seedDemoData().catch(() => {})
+  } else if (!baseWasSeeded()) {
+    // Quien ya tenía datos de una versión anterior recibe solo las empresas y los usuarios nuevos
+    setMany(buildBaseData())
+      .then(markBaseSeeded)
+      .catch(() => {})
+  }
 }

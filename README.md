@@ -12,12 +12,16 @@ ERP simplificado para la feria **Expotecnia** (Ingeniería en Sistemas). Siete m
 | Módulo | Unidad | Ruta | Qué muestra |
 | --- | --- | --- | --- |
 | Dashboard | 3 y 4 | `/` | KPIs animados, 4 gráficos, **simulador de escenarios** y actividad en tiempo real |
-| Planeación Estratégica | 1 | `/planeacion` | Matriz FODA editable por empresa de prueba |
+| Planeación Estratégica | 1 | `/planeacion` | Matriz FODA editable; se pueden agregar, editar y eliminar empresas |
 | Talento Humano | 2 | `/talento-humano` | Empleados (ABM), evaluación de desempeño con estrellas, encuesta de clima paso a paso |
 | Calidad y Mejora Continua | 5 | `/calidad` | Kanban de no conformidades con drag & drop + vista tabla con filtros |
 | Finanzas | 6 | `/finanzas` | Presupuesto vs. ejecutado en Guaraníes, totales y alertas de exceso |
 | Gestor de Proyectos | 7 | `/proyectos` | Kanban de tareas y Gantt propio con dependencias y ruta crítica |
 | Transformación Digital | 8 | `/arquitectura` | Diagrama animado del stack y ciclo de vida del sistema |
+| Usuarios | — | `/usuarios` | Alta, edición y baja de usuarios, roles y cambio de usuario |
+| Documentación | — | `/documentacion` | Guía de uso y documentación técnica dentro del propio sistema |
+
+> **Documentación completa**: está en el sistema (menú lateral → *Documentación*) y también como archivo en [`docs/DOCUMENTACION.md`](docs/DOCUMENTACION.md). Se edita en `src/modules/documentacion/contenido.js` y el archivo se regenera con `npm run docs`.
 
 ## Stack
 
@@ -60,6 +64,18 @@ npm run build
 ```bash
 npm run preview
 ```
+
+```bash
+npm run build:demo
+```
+
+`build:demo` genera **`dist-demo/arandu-erp.html`**: toda la app en un único archivo que se abre con doble clic, sin servidor ni Firebase (guarda los datos en el navegador). Sirve para compartir la demo. Ojo: el `index.html` de la raíz **no** se puede abrir con doble clic (queda en blanco), porque necesita `npm run dev`.
+
+```bash
+npm run docs
+```
+
+`docs` regenera `docs/DOCUMENTACION.md` desde el contenido de la documentación del sistema.
 
 ### Modo local (sin Firebase)
 
@@ -109,13 +125,21 @@ El archivo `.env` no se sube al repositorio (está en `.gitignore`). Cada integr
 
 No hay autenticación real por ahora. La sesión simulada vive en `src/context/SessionContext.jsx`; cuando se sume Firebase Auth, ese es el único archivo a reemplazar.
 
-## 4. Datos de demo y utilidades
+## 4. Usuarios y empresas
+
+- **Ingreso**: la pantalla de bienvenida lista los usuarios activos; se elige uno y se entra. También permite **crear un usuario nuevo** o **entrar como invitado**. La primera persona que se registra en un sistema vacío queda como Administrador.
+- **Cambiar de usuario**: menú del avatar → *Cambiar de usuario* (sin pasar por el ingreso), o el botón de flechas en la página *Usuarios*.
+- **Gestionar usuarios** (solo Administrador): página *Usuarios* → crear, editar rol/estado o eliminar. Reglas: correo único, no se puede borrar el propio usuario y siempre queda al menos un administrador activo.
+- **Roles**: Administrador, Editor y Lector. Por ahora el rol solo controla la gestión de usuarios; el resto de los permisos requiere autenticación real y reglas de Firestore (ver la documentación del sistema).
+- **Empresas** (Planeación): *Nueva empresa* en la cabecera; el lápiz de la tarjeta edita y, desde la edición, se elimina (también borra su matriz FODA).
+
+## 5. Datos de demo y utilidades
 
 | Acción | Dónde | Qué hace |
 | --- | --- | --- |
-| **Cargar datos de demo** | Dashboard y menú del avatar | Escribe ~200 documentos realistas (empresa ficticia *Yvoty Alimentos S.A.*). Los ids son fijos: volver a tocarlo restablece los datos sin duplicar |
+| **Cargar datos de demo** | Dashboard y menú del avatar | Escribe más de 200 documentos realistas (empresa ficticia *Yvoty Alimentos S.A.*). Los ids son fijos: volver a tocarlo restablece los datos sin duplicar |
 | **Probar conexión** *(temporal)* | Dashboard y menú del avatar | Escribe en `test_collection` y espera la confirmación del servidor |
-| **Vaciar todos los datos** | Menú del avatar | Borra las colecciones del ERP (pide confirmación) |
+| **Vaciar datos de los módulos** | Menú del avatar | Borra los registros de los módulos (pide confirmación). Conserva usuarios y empresas |
 | **Buscador** | `Ctrl + K` / `⌘ K` | Busca páginas, empleados, no conformidades y tareas |
 
 Las fechas del seed son relativas al día en que se carga, así el Gantt siempre tiene la línea de «hoy» en el medio del proyecto.
@@ -138,8 +162,8 @@ src/
 │  ├─ charts/          Tooltip, leyenda y estilos compartidos de Recharts
 │  └─ kanban/          Tablero Kanban genérico (lo usan Calidad y Proyectos)
 ├─ modules/            UNA CARPETA POR MÓDULO
-│  ├─ dashboard/  planeacion/  talentoHumano/  calidad/
-│  ├─ finanzas/   proyectos/   arquitectura/   login/
+│  ├─ dashboard/  planeacion/  talentoHumano/  calidad/  finanzas/
+│  ├─ proyectos/  arquitectura/  usuarios/  documentacion/  login/
 ├─ config/             Marca, navegación y catálogos (departamentos, prioridades, colecciones)
 ├─ context/            Tema (claro/oscuro) y sesión simulada
 ├─ lib/                Formato (Gs., fechas), animaciones, utilidades
@@ -174,7 +198,9 @@ function Ejemplo() {
 
 | Colección | Módulo | Campos principales |
 | --- | --- | --- |
+| `empresas` | Planeación | `nombre`, `rubro`, `ciudad`, `descripcion` |
 | `foda` | Planeación | `empresaId`, `tipo`, `texto` |
+| `usuarios` | Usuarios | `nombre`, `email`, `cargo`, `rol`, `estado`, `ultimoAcceso` |
 | `empleados` | Talento Humano | `nombre`, `cargo`, `departamento`, `email`, `fechaIngreso`, `estado` |
 | `evaluaciones` | Talento Humano | `empleadoId`, `periodo`, `criterios{}`, `promedio` |
 | `clima_respuestas` | Talento Humano | `respuestas{}`, `departamento` |

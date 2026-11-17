@@ -3,6 +3,7 @@ import { BrowserRouter, Link, Navigate, Route, Routes, useLocation } from 'react
 import { MotionConfig } from 'framer-motion'
 import { Compass } from 'lucide-react'
 import { ThemeProvider } from '@/context/ThemeContext'
+import { DemoRouter } from '@/lib/DemoRouter'
 import { SessionProvider, useSession } from '@/context/SessionContext'
 import { describeError, onDataError } from '@/firebase/hooks'
 import { autoSeedIfNeeded } from '@/firebase/seed'
@@ -18,6 +19,8 @@ const CalidadPage = lazy(() => import('@/modules/calidad/CalidadPage'))
 const FinanzasPage = lazy(() => import('@/modules/finanzas/FinanzasPage'))
 const ProyectosPage = lazy(() => import('@/modules/proyectos/ProyectosPage'))
 const ArquitecturaPage = lazy(() => import('@/modules/arquitectura/ArquitecturaPage'))
+const UsuariosPage = lazy(() => import('@/modules/usuarios/UsuariosPage'))
+const DocumentacionPage = lazy(() => import('@/modules/documentacion/DocumentacionPage'))
 
 /** Sin sesión (simulada) se redirige a la pantalla de bienvenida. */
 function RequireSession({ children }) {
@@ -58,6 +61,9 @@ function DataErrorToasts() {
   return null
 }
 
+// `npm run build:demo` genera un único HTML sin servidor: ahí se navega en memoria
+const Router = import.meta.env.MODE === 'demo' ? DemoRouter : BrowserRouter
+
 export default function App() {
   useEffect(() => {
     autoSeedIfNeeded()
@@ -67,7 +73,7 @@ export default function App() {
     <ThemeProvider>
       <SessionProvider>
         <MotionConfig reducedMotion="user">
-          <BrowserRouter>
+          <Router>
             <Routes>
               <Route path="/login" element={<LoginPage />} />
               <Route
@@ -84,10 +90,12 @@ export default function App() {
                 <Route path="finanzas" element={<FinanzasPage />} />
                 <Route path="proyectos" element={<ProyectosPage />} />
                 <Route path="arquitectura" element={<ArquitecturaPage />} />
+                <Route path="usuarios" element={<UsuariosPage />} />
+                <Route path="documentacion" element={<DocumentacionPage />} />
                 <Route path="*" element={<NotFound />} />
               </Route>
             </Routes>
-          </BrowserRouter>
+          </Router>
           <Toaster />
           <DataErrorToasts />
         </MotionConfig>
