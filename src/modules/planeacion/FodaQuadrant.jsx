@@ -109,10 +109,10 @@ export function FodaQuadrant({ cuadrante, items, loading, onAdd, onUpdate, onRem
   }
 
   return (
-    <Card variants={fadeUp} className="relative flex min-h-[320px] flex-col overflow-hidden">
+    <Card variants={fadeUp} interactive className="group relative flex min-h-[320px] flex-col overflow-hidden">
       <div className={cn('pointer-events-none absolute inset-x-0 top-0 h-28 bg-gradient-to-b to-transparent opacity-70', cuadrante.glow)} aria-hidden="true" />
       <div className="relative flex items-center gap-3 px-5 pt-5">
-        <span className={cn('grid size-10 shrink-0 place-items-center rounded-xl shadow-card', cuadrante.tile)}>
+        <span className={cn('grid size-10 shrink-0 place-items-center rounded-xl shadow-card transition-transform duration-300 group-hover:scale-110 group-hover:rotate-[-6deg]', cuadrante.tile)}>
           <Icon size={19} aria-hidden="true" />
         </span>
         <div className="min-w-0 flex-1">

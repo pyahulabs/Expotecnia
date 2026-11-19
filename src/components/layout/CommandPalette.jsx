@@ -44,12 +44,11 @@ export function CommandPalette({ open, onClose }) {
     const match = (...texts) => !q || texts.some((t) => normalize(t).includes(q))
     const go = (path) => () => navigate(path)
 
-    const paginas = NAV_ITEMS.filter((item) => match(item.label, item.descripcion, item.unidad)).map((item) => ({
+    const paginas = NAV_ITEMS.filter((item) => match(item.label, item.descripcion)).map((item) => ({
       id: `nav-${item.path}`,
       icon: item.icon,
       title: item.label,
       subtitle: item.descripcion,
-      meta: item.unidad,
       run: go(item.path),
     }))
 

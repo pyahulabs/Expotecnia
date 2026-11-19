@@ -23,7 +23,7 @@ function Illustration({ icon: Icon }) {
         <circle cx="30" cy="92" r="3" fill="var(--success)" opacity="0.5" />
       </svg>
       <motion.div
-        className="absolute right-4 top-1 grid size-12 place-items-center rounded-2xl bg-brand-button text-white shadow-[0_10px_24px_-8px_var(--primary)] ring-4 ring-surface"
+        className="absolute right-4 top-1 grid size-12 place-items-center rounded-2xl bg-brand-animated text-white shadow-[0_10px_24px_-8px_var(--primary)] ring-4 ring-surface"
         animate={{ y: [0, -5, 0] }}
         transition={{ duration: 3.6, repeat: Infinity, ease: 'easeInOut' }}
       >

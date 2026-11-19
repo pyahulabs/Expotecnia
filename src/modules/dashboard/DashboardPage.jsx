@@ -27,7 +27,7 @@ const saludo = () => {
 
 function ChartCard({ icon, title, description, action, loading, empty, emptyText, children, className }) {
   return (
-    <Card variants={fadeUp} className={className}>
+    <Card variants={fadeUp} interactive className={className}>
       <CardHeader icon={icon} title={title} description={description} action={action} />
       <CardBody>
         {loading ? (
@@ -71,7 +71,7 @@ export default function DashboardPage() {
   return (
     <>
       <PageHeader
-        eyebrow="Unidades 3 y 4 · Sistemas de información gerencial"
+        eyebrow="Sistemas de información gerencial"
         title={`${saludo()}, ${user?.nombre?.split(' ')[0] || 'equipo'}`}
         description="Indicadores clave de toda la organización, actualizados en tiempo real."
         actions={

@@ -26,7 +26,7 @@ export default function ArquitecturaPage() {
   return (
     <>
       <PageHeader
-        eyebrow="Unidad 8 · Transformación digital"
+        eyebrow="Transformación digital"
         title="Arquitectura del sistema"
         description="Cómo está construido el ERP: las capas del stack, el recorrido de los datos en tiempo real y el ciclo de vida del sistema."
       />

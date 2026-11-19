@@ -226,6 +226,24 @@
   0% { transform: translate3d(calc(var(--sx) * -1), 0, 0) rotate(calc(var(--r) * -1)); }
   100% { transform: translate3d(var(--sx), 0, 0) rotate(var(--r)); }
 }
+/* Filas de tabla que entran escalonadas */
+@keyframes row-in {
+  from { opacity: 0; transform: translate3d(0, 8px, 0); }
+  to { opacity: 1; transform: translate3d(0, 0, 0); }
+}
+/* Llama de la prioridad «Crítica» */
+@keyframes flame {
+  0%, 100% { transform: scale(1) rotate(0deg); }
+  25% { transform: scale(1.18) rotate(-6deg); }
+  50% { transform: scale(0.94) rotate(4deg); }
+  75% { transform: scale(1.12) rotate(-3deg); }
+}
+/* Ícono que se balancea al pasar el mouse */
+@keyframes wiggle {
+  0%, 100% { transform: rotate(0deg) scale(1.1); }
+  30% { transform: rotate(-10deg) scale(1.15); }
+  60% { transform: rotate(8deg) scale(1.15); }
+}
 /* Partículas que suben despacio */
 @keyframes particle-rise {
   0% { transform: translate3d(0, 0, 0); opacity: 0; }
@@ -319,6 +337,28 @@
 @utility bg-brand-button {
   background: linear-gradient(120deg, #5b43ea 0%, #6c4cf2 50%, #8a56e8 78%, #c8603f 100%);
 }
+/* Degradé que se mueve todo el tiempo dentro del botón: una franja más ancha que se desplaza
+   (solo transform). El botón necesita position relative, overflow hidden e isolation. */
+@keyframes brand-flow {
+  from { transform: translate3d(0, 0, 0); }
+  to { transform: translate3d(-50%, 0, 0); }
+}
+@utility bg-brand-animated {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  background: #5b43ea;
+  &::before {
+    content: "";
+    position: absolute;
+    inset: 0 auto 0 0;
+    width: 400%;
+    z-index: -1;
+    background: linear-gradient(100deg, #5b43ea 0%, #7a4cf0 12.5%, #b65bd6 25%, #d4663f 37.5%, #7a4cf0 50%, #5b43ea 62.5%, #7a4cf0 75%, #b65bd6 87.5%, #5b43ea 100%);
+    animation: brand-flow 7s linear infinite;
+    will-change: transform;
+  }
+}
 /* Brillo que recorre la superficie (el elemento necesita position y overflow-hidden) */
 @utility shine {
   &::after {
@@ -346,6 +386,21 @@
     pointer-events: none;
   }
 }
+
+/* Tablas: cada fila entra con un pequeño retraso respecto de la anterior */
+.tabla-animada tbody > tr {
+  animation: row-in 0.45s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+.tabla-animada tbody > tr:nth-child(2) { animation-delay: 35ms; }
+.tabla-animada tbody > tr:nth-child(3) { animation-delay: 70ms; }
+.tabla-animada tbody > tr:nth-child(4) { animation-delay: 105ms; }
+.tabla-animada tbody > tr:nth-child(5) { animation-delay: 140ms; }
+.tabla-animada tbody > tr:nth-child(6) { animation-delay: 175ms; }
+.tabla-animada tbody > tr:nth-child(7) { animation-delay: 210ms; }
+.tabla-animada tbody > tr:nth-child(8) { animation-delay: 245ms; }
+.tabla-animada tbody > tr:nth-child(n + 9) { animation-delay: 280ms; }
+.animate-flame { animation: flame 1.6s ease-in-out infinite; transform-origin: 50% 80%; }
+.group:hover .hover-wiggle { animation: wiggle 0.6s ease-in-out; }
 
 /* Avatares: el color sale de un matiz (--h) calculado a partir del nombre */
 .avatar-tint {

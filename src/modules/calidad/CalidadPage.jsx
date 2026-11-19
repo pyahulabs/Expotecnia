@@ -143,7 +143,7 @@ export default function CalidadPage() {
   return (
     <>
       <PageHeader
-        eyebrow="Unidad 5 · Calidad y mejora continua"
+        eyebrow="Calidad y mejora continua"
         title="No conformidades"
         description="Registrá los desvíos detectados y seguí su tratamiento hasta el cierre. Arrastrá las tarjetas para cambiar su estado."
         actions={

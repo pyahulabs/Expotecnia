@@ -4,7 +4,7 @@ import { cn } from '@/lib/cn'
 export function Table({ className, maxHeight = 'max-h-[68vh]', children, ...props }) {
   return (
     <div className={cn('relative w-full overflow-auto', maxHeight)}>
-      <table className={cn('w-full border-collapse text-left text-sm', className)} {...props}>
+      <table className={cn('tabla-animada w-full border-collapse text-left text-sm', className)} {...props}>
         {children}
       </table>
     </div>

@@ -141,7 +141,7 @@ export default function ProyectosPage() {
   return (
     <>
       <PageHeader
-        eyebrow="Unidad 7 · Gestión de proyectos"
+        eyebrow="Gestión de proyectos"
         title="Gestor de proyectos"
         description={`Proyecto: implementación de ${BRAND.nombre} ${BRAND.sufijo} en ${BRAND.organizacion}`}
         actions={

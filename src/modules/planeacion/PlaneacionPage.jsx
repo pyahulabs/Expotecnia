@@ -103,7 +103,7 @@ export default function PlaneacionPage() {
   return (
     <>
       <PageHeader
-        eyebrow="Unidad 1 · Planeación estratégica"
+        eyebrow="Planeación estratégica"
         title="Matriz FODA"
         description="Analizá la situación de una empresa: factores internos y externos, positivos y negativos."
         actions={

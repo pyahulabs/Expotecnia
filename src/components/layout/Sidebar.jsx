@@ -76,11 +76,10 @@ function NavItem({ item, collapsed, onNavigate, layoutScope }) {
               <span className="absolute -left-3 top-1/2 h-5 w-[3px] -translate-y-1/2 rounded-r-full bg-gradient-to-b from-primary to-primary-2 shadow-[0_0_12px_var(--primary)]" />
             </motion.span>
           )}
-          <Icon size={17} strokeWidth={isActive ? 2.2 : 1.9} className={cn('relative shrink-0 transition-colors', isActive ? 'text-primary-text' : 'text-fg-subtle group-hover:text-fg-muted')} aria-hidden="true" />
+          <Icon size={17} strokeWidth={isActive ? 2.2 : 1.9} className={cn('hover-wiggle relative shrink-0 transition-colors', isActive ? 'text-primary-text' : 'text-fg-subtle group-hover:text-fg-muted')} aria-hidden="true" />
           {!collapsed && (
             <>
-              <span className="relative flex-1 truncate">{item.label}</span>
-              {item.unidad && <span className={cn('relative font-mono text-[10px] font-medium tracking-tight', isActive ? 'text-primary-text' : 'text-fg-subtle/80')}>{item.unidad}</span>}
+              <span className="relative flex-1 truncate transition-transform duration-200 group-hover:translate-x-0.5">{item.label}</span>
             </>
           )}
         </>
@@ -89,7 +88,7 @@ function NavItem({ item, collapsed, onNavigate, layoutScope }) {
   )
   if (!collapsed) return link
   return (
-    <Tooltip content={item.unidad ? `${item.label} · ${item.unidad}` : item.label} side="right" className="w-full">
+    <Tooltip content={item.label} side="right" className="w-full">
       {link}
     </Tooltip>
   )
@@ -102,7 +101,7 @@ function SidebarContent({ collapsed, onNavigate, onToggle, onClose, layoutScope 
       {/* Espacio de trabajo */}
       <div className={cn('flex h-16 shrink-0 items-center gap-2', collapsed ? 'justify-center px-0' : 'justify-between px-4')}>
         <NavLink to="/" onClick={onNavigate} aria-label="Ir al dashboard" className="flex min-w-0 items-center gap-2.5 rounded-lg">
-          <LogoMark size={30} className="shadow-[0_6px_16px_-6px_var(--primary)]" />
+          <LogoMark size={30} className="shadow-[0_6px_16px_-6px_var(--primary)] transition-transform duration-300 hover:rotate-[-8deg] hover:scale-110" />
           {!collapsed && (
             <span className="min-w-0">
               <span className="block truncate text-[14px] font-semibold leading-4 tracking-[-0.02em] text-fg">

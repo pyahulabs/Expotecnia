@@ -63,7 +63,7 @@ export default function TalentoHumanoPage() {
   return (
     <>
       <PageHeader
-        eyebrow="Unidad 2 · Gestión del talento humano"
+        eyebrow="Gestión del talento humano"
         title="Talento Humano"
         description="Legajos del personal, evaluación de desempeño y encuesta de clima organizacional."
         actions={

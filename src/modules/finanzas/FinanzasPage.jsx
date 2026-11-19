@@ -98,7 +98,7 @@ export default function FinanzasPage() {
   return (
     <>
       <PageHeader
-        eyebrow="Unidad 6 · Gestión financiera"
+        eyebrow="Gestión financiera"
         title="Presupuesto vs. ejecutado"
         description={`Control presupuestario por departamento del ejercicio ${new Date().getFullYear()}, en guaraníes.`}
         actions={

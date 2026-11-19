@@ -47,11 +47,11 @@ export function StatCard({ label, value, format, icon: Icon, tone = 'primary', t
   if (loading) return <SkeletonStatCard className={className} />
   const t = TONES[tone] || TONES.primary
   return (
-    <Card variants={fadeUp} interactive className={cn('relative flex flex-col overflow-hidden p-4 sm:p-5', className)}>
+    <Card variants={fadeUp} interactive className={cn('group relative flex flex-col overflow-hidden p-4 sm:p-5', className)}>
       {/* Brillo de color en la esquina, según el tono del indicador */}
-      <div className="pointer-events-none absolute -right-10 -top-12 size-36 rounded-full opacity-[0.10] blur-2xl dark:opacity-[0.16]" style={{ background: t.glow }} aria-hidden="true" />
+      <div className="pointer-events-none absolute -right-10 -top-12 size-36 rounded-full opacity-[0.10] blur-2xl transition-transform duration-500 group-hover:scale-150 dark:opacity-[0.16]" style={{ background: t.glow, animation: 'mesh-b 9s ease-in-out infinite' }} aria-hidden="true" />
       <div className="relative flex min-w-0 items-center gap-2.5">
-        <span className={cn('grid size-8 shrink-0 place-items-center rounded-lg border', t.chip)}>{Icon && <Icon size={16} aria-hidden="true" />}</span>
+        <span className={cn('grid size-8 shrink-0 place-items-center rounded-lg border transition-transform duration-300 group-hover:scale-110 group-hover:-rotate-6', t.chip)}>{Icon && <Icon size={16} aria-hidden="true" />}</span>
         <span className="truncate text-[13px] font-medium text-fg-muted">{label}</span>
       </div>
       <div className="relative mt-4 flex items-end justify-between gap-2">

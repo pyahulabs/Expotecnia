@@ -252,7 +252,7 @@ export default function LoginPage() {
                   disabled={ocupado}
                   whileHover={ocupado ? undefined : { y: -1 }}
                   whileTap={ocupado ? undefined : { scale: 0.985 }}
-                  className="shine-loop relative flex h-11 w-full items-center justify-center gap-2 overflow-hidden rounded-xl bg-brand-button text-[15px] font-semibold text-white shadow-[inset_0_1px_0_rgb(255_255_255/0.25),0_10px_28px_-10px_var(--primary)] transition-shadow hover:shadow-[inset_0_1px_0_rgb(255_255_255/0.25),0_14px_34px_-10px_var(--primary)] disabled:cursor-wait"
+                  className="shine-loop bg-brand-animated flex h-11 w-full items-center justify-center gap-2 rounded-xl text-[15px] font-semibold text-white shadow-[inset_0_1px_0_rgb(255_255_255/0.25),0_10px_28px_-10px_var(--primary)] transition-shadow hover:shadow-[inset_0_1px_0_rgb(255_255_255/0.25),0_14px_34px_-10px_var(--primary)] disabled:cursor-wait"
                 >
                   {ocupado ? (
                     <>

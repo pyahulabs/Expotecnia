@@ -196,7 +196,6 @@ export function StackDiagram() {
                       <item.icon size={19} aria-hidden="true" />
                     </span>
                     <span className="mt-2.5 text-[13px] font-semibold leading-4 text-fg">{item.label}</span>
-                    <span className="mt-1 text-[10px] font-semibold uppercase tracking-wide text-fg-subtle">{item.unidad}</span>
                     <span className="mt-2 space-y-0.5">
                       {colecciones.map((c) => (
                         <span key={c} className="block break-all font-mono text-[10px] leading-4 text-fg-muted">
