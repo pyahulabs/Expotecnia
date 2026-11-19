@@ -2,20 +2,26 @@ import { useId } from 'react'
 import { cn } from '@/lib/cn'
 import { BRAND } from '@/config/brand'
 
-/** Isotipo: "A" sobre un cuadrado redondeado con gradiente índigo-violeta. */
+/** Isotipo: "A" sobre un cuadrado redondeado con el degradé de la marca y un punto cálido. */
 export function LogoMark({ size = 32, className }) {
   const id = useId()
   return (
     <svg width={size} height={size} viewBox="0 0 64 64" className={cn('shrink-0', className)} role="img" aria-label={`${BRAND.nombre} ${BRAND.sufijo}`}>
       <defs>
-        <linearGradient id={id} x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0" stopColor="#7c6cff" />
-          <stop offset="1" stopColor="#4a3fe0" />
+        <linearGradient id={`${id}-g`} x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0" stopColor="#8f7bff" />
+          <stop offset="0.55" stopColor="#6e56f8" />
+          <stop offset="1" stopColor="#4b33d6" />
+        </linearGradient>
+        <linearGradient id={`${id}-h`} x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stopColor="#fff" stopOpacity="0.28" />
+          <stop offset="0.5" stopColor="#fff" stopOpacity="0" />
         </linearGradient>
       </defs>
-      <rect width="64" height="64" rx="16" fill={`url(#${id})`} />
+      <rect width="64" height="64" rx="17" fill={`url(#${id}-g)`} />
+      <rect width="64" height="64" rx="17" fill={`url(#${id}-h)`} />
       <path d="M32 13 49 47h-8.6l-3.1-6.6H26.7L23.6 47H15L32 13Zm0 16.2-2.6 5.6h5.2L32 29.2Z" fill="#fff" />
-      <circle cx="47" cy="19" r="4" fill="#fff" fillOpacity="0.55" />
+      <circle cx="47.5" cy="18.5" r="4.2" fill="#ffb59c" />
     </svg>
   )
 }

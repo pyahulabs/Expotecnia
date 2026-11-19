@@ -131,7 +131,8 @@ export default function PlaneacionPage() {
             <EmptyState
               icon={Building2}
               title="Todavía no hay empresas"
-              description="Creá la primera empresa para armar su matriz FODA, o cargá los datos de demo desde el dashboard."
+                demo
+              description="Creá la primera empresa para armar su matriz FODA, o cargá los datos de demo."
               action={
                 <Button icon={Plus} onClick={() => setModal({ open: true, empresa: null })}>
                   Nueva empresa

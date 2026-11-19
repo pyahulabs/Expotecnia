@@ -62,9 +62,11 @@ export function Layout() {
 
       <Sidebar collapsed={collapsed} onToggle={() => setCollapsed((v) => !v)} mobileOpen={mobileOpen} onMobileClose={closeMobile} />
 
-      <div className="flex min-w-0 flex-1 flex-col">
+      <div className="relative flex min-w-0 flex-1 flex-col">
+        {/* Brillo tenue de la marca en la parte superior del área de trabajo */}
+        <div className="pointer-events-none absolute inset-x-0 top-0 h-[420px] bg-[radial-gradient(ellipse_70%_100%_at_50%_0%,var(--app-glow),transparent_70%)]" aria-hidden="true" />
         <Header onOpenMenu={() => setMobileOpen(true)} onOpenSearch={() => setSearchOpen(true)} />
-        <main id="contenido" tabIndex={-1} className="flex-1 outline-none">
+        <main id="contenido" tabIndex={-1} className="relative flex-1 outline-none">
           <div className="mx-auto w-full max-w-[1480px] px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
             <AnimatePresence mode="wait" initial={false}>
               <motion.div key={location.pathname} {...pageTransition}>

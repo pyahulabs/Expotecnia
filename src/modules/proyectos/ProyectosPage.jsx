@@ -199,6 +199,7 @@ export default function ProyectosPage() {
                   <EmptyState
                     icon={Columns3}
                     title="El tablero está vacío"
+                demo
                     description="Creá la primera tarea y arrastrala entre columnas a medida que avanza."
                     action={
                       <Button icon={Plus} onClick={() => setModalTarea({ open: true, tarea: null, estado: 'pendiente' })}>
@@ -236,6 +237,7 @@ export default function ProyectosPage() {
                 <EmptyState
                   icon={ChartNoAxesGantt}
                   title="Todavía no hay cronograma"
+                demo
                   description="Agregá las fases del proyecto con sus fechas y dependencias para ver el Gantt y la ruta crítica."
                   action={
                     <Button icon={Plus} onClick={() => setModalFase({ open: true, fase: null })}>

@@ -51,7 +51,7 @@ npm install
 npm run dev
 ```
 
-Abrí <http://localhost:5173>. En la pantalla de bienvenida tocá **Ingresar al sistema** (el acceso es simulado: no valida usuario ni contraseña).
+Abrí <http://localhost:5173>. Siempre aparece la pantalla de acceso: ingresá con un correo `nombre.apellido@gmail.com` (por ejemplo `nicolas.batta@gmail.com`, Administrador) y la contraseña de demostración **12345678**. El botón **Cuentas de la demostración** lista todos los correos.
 
 El servidor también queda visible en la red local (`Network: http://192.168.x.x:5173`), así que podés abrirlo desde un celular conectado al mismo wifi: ideal para mostrar el tiempo real en la feria.
 
@@ -79,7 +79,7 @@ npm run docs
 
 ### Modo local (sin Firebase)
 
-Si todavía no existe el archivo `.env`, la app **funciona igual**: guarda los datos en el navegador (localStorage), sincroniza entre pestañas y carga sola los datos de demo la primera vez. El sidebar lo indica con la etiqueta **Modo local**. Sirve para desarrollar y como plan B si se cae el wifi en la feria.
+Si todavía no existe el archivo `.env`, la app **funciona igual**: guarda los datos en el navegador (localStorage) y sincroniza entre pestañas. Los datos de demo no se cargan solos: un Administrador toca **Cargar datos de demo**. El sidebar lo indica con la etiqueta **Modo local**. Sirve para desarrollar y como plan B si se cae el wifi en la feria.
 
 ## 3. Configuración de Firebase
 
@@ -127,9 +127,11 @@ No hay autenticación real por ahora. La sesión simulada vive en `src/context/S
 
 ## 4. Usuarios y empresas
 
-- **Ingreso**: la pantalla de bienvenida lista los usuarios activos; se elige uno y se entra. También permite **crear un usuario nuevo** o **entrar como invitado**. La primera persona que se registra en un sistema vacío queda como Administrador.
+- **Ingreso**: correo + contraseña. La sesión dura mientras la pestaña está abierta (no se restaura al volver a abrir la app). Los usuarios base están en `src/config/usuarios.js` y se crean en Firestore los que falten al abrir la app, aunque no se hayan cargado los datos de demo.
+- **Cuentas**: equipo (Nicolás Batta Piccinini, Wilson Bogado, Bethania Benítez, Jazmín Benítez, Augusto Benítez, Isaías Colmán) y los usuarios de la empresa de ejemplo. Todos con correo `nombre.apellido@gmail.com` y contraseña de demostración `12345678`. El rol de los nuevos integrantes se cambia en `ROL_USUARIOS_NUEVOS`.
 - **Cambiar de usuario**: menú del avatar → *Cambiar de usuario* (sin pasar por el ingreso), o el botón de flechas en la página *Usuarios*.
 - **Gestionar usuarios** (solo Administrador): página *Usuarios* → crear, editar rol/estado o eliminar. Reglas: correo único, no se puede borrar el propio usuario y siempre queda al menos un administrador activo.
+- **Contraseñas**: obligatorias al crear un usuario; se guardan solo como hash SHA-256. Es un **control de acceso de demostración en el cliente, no seguridad real**: para producción hay que usar Firebase Authentication y reglas de Firestore.
 - **Roles**: Administrador, Editor y Lector. Por ahora el rol solo controla la gestión de usuarios; el resto de los permisos requiere autenticación real y reglas de Firestore (ver la documentación del sistema).
 - **Empresas** (Planeación): *Nueva empresa* en la cabecera; el lápiz de la tarjeta edita y, desde la edición, se elimina (también borra su matriz FODA).
 
@@ -137,7 +139,7 @@ No hay autenticación real por ahora. La sesión simulada vive en `src/context/S
 
 | Acción | Dónde | Qué hace |
 | --- | --- | --- |
-| **Cargar datos de demo** | Dashboard y menú del avatar | Escribe más de 200 documentos realistas (empresa ficticia *Yvoty Alimentos S.A.*). Los ids son fijos: volver a tocarlo restablece los datos sin duplicar |
+| **Cargar datos de demo** | Dashboard, menú del avatar y estados vacíos (solo Administrador) | Escribe más de 200 documentos realistas (empresa ficticia *Yvoty Alimentos S.A.*). Los ids son fijos: volver a tocarlo restablece los datos sin duplicar |
 | **Probar conexión** *(temporal)* | Dashboard y menú del avatar | Escribe en `test_collection` y espera la confirmación del servidor |
 | **Vaciar datos de los módulos** | Menú del avatar | Borra los registros de los módulos (pide confirmación). Conserva usuarios y empresas |
 | **Buscador** | `Ctrl + K` / `⌘ K` | Busca páginas, empleados, no conformidades y tareas |

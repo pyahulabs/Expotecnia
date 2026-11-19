@@ -64,6 +64,7 @@ export function DesempenoTab({ empleados, evaluaciones, loading, onEvaluar }) {
         <EmptyState
           icon={ClipboardCheck}
           title="Todavía no hay evaluaciones"
+                demo
           description="Evaluá a un empleado con estrellas de 1 a 5 en cada criterio y el promedio se calcula solo."
           action={
             <Button icon={Star} onClick={() => onEvaluar()}>

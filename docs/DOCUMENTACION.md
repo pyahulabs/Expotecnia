@@ -1,6 +1,6 @@
 # Arandu ERP · Documentación del sistema
 
-Versión 1.1
+Versión 2.0
 
 > Este archivo se genera con `npm run docs` a partir de `src/modules/documentacion/contenido.js`. No lo edites a mano.
 
@@ -68,15 +68,18 @@ La aplicación queda en `http://localhost:5173`. El servidor también se muestra
 
 ### Ingresar
 
-1. En la pantalla de bienvenida elegí tu usuario de la lista y se abre el dashboard.
-2. Si todavía no tenés usuario, tocá **Nuevo usuario**, completá nombre y correo y entrás directamente.
-3. También podés **Entrar como invitado** (rol Lector, sin cuenta).
+1. Al abrir la aplicación siempre aparece la pantalla de acceso: no se restaura ninguna sesión anterior ni se cargan datos automáticamente.
+2. Escribí tu **correo** (formato `nombre.apellido@gmail.com`) y tu **contraseña**, y tocá **Ingresar**. El ojo del campo muestra u oculta la contraseña.
+3. Si te olvidaste el correo, tocá **Cuentas de la demostración**: al elegir una cuenta, el correo se completa solo y solo falta la contraseña.
+4. Si los datos no coinciden, la tarjeta se sacude y aparece el mensaje de error. Una cuenta **Inactiva** no puede ingresar.
 
-La primera persona que se registra en un sistema vacío queda como **Administrador**; las siguientes, como **Editor**.
+La sesión dura mientras la pestaña esté abierta: recargar la página la mantiene, pero cerrar la pestaña o abrir la app en otra obliga a ingresar de nuevo.
+
+Los usuarios base (el equipo y los usuarios de la empresa de ejemplo) existen desde el inicio: al abrir la app se crean en la colección `usuarios` los que falten, aunque no se hayan cargado los datos de demo. Están definidos en `src/config/usuarios.js`.
 
 ### Cargar los datos de demostración
 
-El botón **Cargar datos de demo** (en el dashboard y en el menú del avatar) escribe más de 200 documentos realistas en todos los módulos. Se puede tocar las veces que haga falta: los datos tienen identificadores fijos, así que se restablecen sin duplicarse. Sin Firebase configurado, la primera vez se cargan solos.
+El botón **Cargar datos de demo** (en el dashboard, en el menú del avatar y en los estados vacíos de cada módulo) escribe más de 200 documentos realistas en todos los módulos. **Solo lo ve un Administrador.** Se puede tocar las veces que haga falta: los datos tienen identificadores fijos, así que se restablecen sin duplicarse. Nunca se cargan solos.
 
 - **Probar conexión** escribe un documento en `test_collection` y confirma que la base responde.
 - **Vaciar datos de los módulos** borra los registros de los módulos pero conserva los usuarios y las empresas, para no quedarte sin cuenta con la que ingresar.
@@ -249,28 +252,42 @@ Muestra el sistema por capas (navegador → React → Firestore → módulos) co
 
 - Desde el **menú del avatar** (arriba a la derecha) elegí a otra persona en «Cambiar de usuario»: la sesión pasa a ser suya sin volver a la pantalla de ingreso.
 - En la página **Usuarios**, el ícono de flechas de cada fila hace lo mismo.
-- **Cerrar sesión** vuelve a la pantalla de bienvenida.
+- **Cerrar sesión** vuelve a la pantalla de acceso.
 
 Las acciones quedan registradas con el nombre del usuario activo (por ejemplo, en Actividad reciente).
 
 ### Administrar usuarios
 
-Solo un **Administrador** puede crear, editar o eliminar cuentas desde la página **Usuarios**. Cada usuario tiene nombre, correo (único), cargo, rol y estado.
+Solo un **Administrador** puede crear, editar o eliminar cuentas desde la página **Usuarios**. Cada usuario tiene nombre, correo (único), cargo, departamento, teléfono, fecha de ingreso, rol, estado y, opcionalmente, contraseña. La tabla muestra el cargo con su departamento y, en pantallas anchas, el teléfono y la antigüedad.
 
-- Un usuario **Inactivo** no aparece en la pantalla de ingreso ni en el cambio rápido.
+- Un usuario **Inactivo** no puede ingresar ni aparece en el cambio rápido.
 - No se puede eliminar el propio usuario.
 - Siempre tiene que quedar al menos un administrador activo: el último no se puede borrar, degradar ni desactivar.
 - Si editás tu propio usuario, los cambios se reflejan al instante en tu sesión.
+
+### Mi perfil
+
+Cualquier persona con cuenta puede completar sus propios datos (nombre, cargo, departamento, teléfono y fecha de ingreso) desde el menú del avatar → **Mi perfil**, sin ser Administrador. El correo y el rol los define un Administrador.
+
+### Contraseñas
+
+- Todas las cuentas base usan la misma contraseña de demostración. En el código solo se guarda su hash (`CLAVE_DEMO_HASH` en `src/config/usuarios.js`).
+- Al crear un usuario nuevo, la contraseña es obligatoria (mínimo 6 caracteres). Un Administrador puede cambiarla o quitarla después desde la ventana de edición; una cuenta sin contraseña propia usa la de demostración.
+- Al cambiar de usuario desde el menú del avatar o desde la página Usuarios, se pide la contraseña de la cuenta.
+- Los usuarios que ya existían de versiones anteriores pasan, una sola vez, al formato de correo `nombre.apellido@gmail.com` con la contraseña de demostración. Después se respetan los cambios que se hagan.
+- El rol con el que se crean los usuarios del equipo está en `ROL_USUARIOS_NUEVOS` (`src/config/usuarios.js`).
+
+> **Importante:** Este es un control de acceso de demostración en el cliente, no seguridad real. Se comparan en el navegador contra un hash guardado en la colección `usuarios`, que cualquiera con acceso a la base o al código puede leer, y una contraseña corta se deduce a partir de su hash. Sirven para ordenar el uso en la feria. Para proteger datos reales hay que usar Firebase Authentication y reglas de seguridad en Firestore.
 
 ### Roles
 
 | Rol | Pensado para | Hoy permite |
 | --- | --- | --- |
-| Administrador | Quien gestiona el sistema | Todo, incluida la gestión de usuarios |
+| Administrador | Quien gestiona el sistema | Todo, incluida la gestión de usuarios y la carga de datos de demo |
 | Editor | Quien trabaja en los módulos | Usar todos los módulos y cambiar de usuario |
-| Lector | Quien solo consulta (incluye invitados) | Ver la información y cambiar de usuario |
+| Lector | Quien solo consulta | Ver la información y cambiar de usuario |
 
-> **Importante:** Por ahora el rol solo controla el acceso a la gestión de usuarios. Que un Lector no pueda modificar registros en los módulos se aplicará cuando se sume autenticación real con reglas de seguridad en Firestore: hoy esos controles de interfaz no serían una protección verdadera, porque cualquiera puede elegir el usuario que quiera.
+> **Importante:** Por ahora el rol controla la gestión de usuarios y la carga de datos de demo. Que un Lector no pueda modificar registros en los módulos se aplicará cuando se sume autenticación real con reglas de seguridad en Firestore: hoy esos controles de interfaz no serían una protección verdadera, porque cualquiera puede elegir el usuario que quiera.
 
 ---
 
@@ -303,7 +320,7 @@ El estado se ve en la parte inferior del menú lateral: **Conectando…**, **Fir
 | --- | --- | --- |
 | `empresas` | Planeación | nombre, rubro, ciudad, descripcion |
 | `foda` | Planeación | empresaId, tipo, texto |
-| `usuarios` | Usuarios | nombre, email, cargo, rol, estado, ultimoAcceso |
+| `usuarios` | Usuarios | nombre, email, cargo, departamento, telefono, fechaIngreso, rol, estado, ultimoAcceso, claveHash |
 | `empleados` | Talento Humano | nombre, cargo, departamento, email, fechaIngreso, estado |
 | `evaluaciones` | Talento Humano | empleadoId, periodo, criterios, promedio |
 | `clima_respuestas` | Talento Humano | respuestas, departamento |
@@ -425,6 +442,7 @@ Los componentes disponibles se importan desde `@/components/ui`: Button, Card, B
 | Todo aparece vacío | Tocá **Cargar datos de demo** y revisá el estado de conexión del menú lateral |
 | Mis cambios no aparecen en otro dispositivo | Estás en modo local (sin `.env`): cada navegador tiene sus propios datos. Configurá Firebase |
 | «Sin conexión» en el menú lateral | No hay internet: se muestran los últimos datos guardados y se sincroniza solo al volver |
+| Olvidé la contraseña de una cuenta | Un Administrador la cambia o la quita desde Usuarios → editar |
 | No puedo crear ni editar usuarios | Solo un Administrador puede hacerlo: cambiá a una cuenta con ese rol |
 | No me deja degradar o borrar a un usuario | Es el único administrador activo: primero nombrá a otro |
 | Las tarjetas no se arrastran en el celular | Mantené presionada la tarjeta un instante antes de moverla |

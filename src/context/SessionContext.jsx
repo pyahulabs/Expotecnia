@@ -1,16 +1,27 @@
 import { createContext, useCallback, useContext, useMemo, useState } from 'react'
 
-// Sesión SIMULADA (sin autenticación real): guarda en localStorage quién está usando el
-// sistema. Cuando se agregue Firebase Auth, se reemplaza este archivo.
+// Sesión SIMULADA: guarda quién está usando el sistema. Vive en sessionStorage, así que
+// dura solo mientras la pestaña está abierta: al abrir la app de nuevo siempre aparece el login.
+// (Control de acceso de demostración: ver la advertencia en src/config/usuarios.js.)
 //
 // session = { id?, nombre, email, rol, cargo? }  ·  id = documento de la colección `usuarios`
-// (un invitado no tiene id porque no existe en la colección).
 const SessionContext = createContext({ user: null, login: () => {}, switchUser: () => {}, updateSession: () => {}, logout: () => {} })
 const STORAGE_KEY = 'erp.session'
 
+// Versiones anteriores guardaban la sesión en localStorage (sobrevivía al cerrar el navegador)
+// y tenían ingreso automático: se limpia para que no se restaure nada.
+try {
+  localStorage.removeItem(STORAGE_KEY)
+  localStorage.removeItem('erp.sinAutoIngreso')
+  localStorage.removeItem('erp.usuariosPrincipales.v1')
+  localStorage.removeItem('erp.usuariosPrincipales.v2')
+} catch {
+  /* almacenamiento no disponible */
+}
+
 const readSession = () => {
   try {
-    return JSON.parse(localStorage.getItem(STORAGE_KEY)) || null
+    return JSON.parse(sessionStorage.getItem(STORAGE_KEY)) || null
   } catch {
     return null
   }
@@ -18,10 +29,10 @@ const readSession = () => {
 
 const writeSession = (session) => {
   try {
-    if (session) localStorage.setItem(STORAGE_KEY, JSON.stringify(session))
-    else localStorage.removeItem(STORAGE_KEY)
+    if (session) sessionStorage.setItem(STORAGE_KEY, JSON.stringify(session))
+    else sessionStorage.removeItem(STORAGE_KEY)
   } catch {
-    /* almacenamiento no disponible: la sesión dura mientras la pestaña esté abierta */
+    /* almacenamiento no disponible: la sesión dura mientras la página esté abierta */
   }
 }
 

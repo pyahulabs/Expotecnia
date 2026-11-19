@@ -169,6 +169,7 @@ export default function FinanzasPage() {
               <EmptyState
                 icon={Wallet}
                 title="Todavía no hay presupuestos"
+                demo
                 description="Asigná un presupuesto anual a cada departamento para controlar su ejecución."
                 action={
                   <Button icon={Plus} onClick={() => setModal({ open: true, registro: null })}>

@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { Pencil, SearchX, Star, Trash2, UserPlus, Users } from 'lucide-react'
-import { Avatar, Badge, Button, Card, Chip, ConfirmDialog, EmptyState, IconButton, Loading, SearchInput, SkeletonTable, StarRating, Table, TBody, TD, TH, THead } from '@/components/ui'
+import { Avatar, Badge, Button, Card, Chip, ConfirmDialog, EmptyState, IconButton, Loading, Pagination, SearchInput, SkeletonTable, StarRating, Table, TBody, TD, TH, THead, usePaginacion } from '@/components/ui'
 import { DEPARTAMENTOS, ESTADOS_EMPLEADO } from '@/config/constants'
 import { formatDateYear, formatDecimal, normalize } from '@/lib/format'
 import { antiguedad } from './desempeno'
@@ -26,6 +26,8 @@ export function EmpleadosTab({ empleados, loading, ultimas, busquedaInicial = ''
         (!q || [e.nombre, e.cargo, e.email, e.departamento].some((campo) => normalize(campo).includes(q))),
     )
   }, [empleados, busqueda, departamento])
+
+  const paginacion = usePaginacion(filtrados, 8)
 
   const limpiar = () => {
     setBusqueda('')
@@ -55,7 +57,8 @@ export function EmpleadosTab({ empleados, loading, ultimas, busquedaInicial = ''
           <EmptyState
             icon={Users}
             title="Todavía no hay empleados"
-            description="Creá el primer legajo o cargá los datos de demostración desde el dashboard."
+            description="Creá el primer legajo o cargá los datos de demostración."
+            demo
             action={
               <Button icon={UserPlus} onClick={onNuevo}>
                 Nuevo empleado
@@ -90,7 +93,7 @@ export function EmpleadosTab({ empleados, loading, ultimas, busquedaInicial = ''
             </THead>
             <TBody>
               <AnimatePresence initial={false}>
-                {filtrados.map((empleado) => {
+                {paginacion.visibles.map((empleado) => {
                   const evaluacion = ultimas.get(empleado.id)
                   return (
                     <motion.tr
@@ -151,11 +154,7 @@ export function EmpleadosTab({ empleados, loading, ultimas, busquedaInicial = ''
         )}
       </div>
 
-      {!loading && filtrados.length > 0 && (
-        <p className="border-t border-line px-5 py-3 text-xs text-fg-subtle sm:px-6">
-          Mostrando <span className="font-semibold text-fg-muted">{filtrados.length}</span> de {empleados.length} empleados
-        </p>
-      )}
+      {!loading && filtrados.length > 0 && <Pagination {...paginacion} nombre={filtrados.length === empleados.length ? 'empleados' : `empleados (de ${empleados.length})`} />}
 
       <ConfirmDialog
         open={!!aEliminar}

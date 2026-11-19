@@ -8,8 +8,9 @@ import { NAV_SECTIONS } from '@/config/navigation'
 import { BRAND } from '@/config/brand'
 import { useConnectionStatus } from '@/firebase/hooks'
 import { projectId } from '@/firebase/config'
-import { Tooltip } from '@/components/ui'
-import { Logo } from './Logo'
+import { useSession } from '@/context/SessionContext'
+import { Avatar, Tooltip } from '@/components/ui'
+import { LogoMark } from './Logo'
 
 const ESTADOS_CONEXION = {
   local: { title: 'Modo local', detail: 'Sin .env: datos en el navegador', dot: 'bg-warning' },
@@ -28,27 +29,25 @@ function StatusDot({ estado }) {
   )
 }
 
-/** Estado de la conexión de datos: Firestore en vivo o modo local. */
+/** Estado de la conexión de datos: Firestore en vivo, conectando, sin conexión o modo local. */
 function ConnectionStatus({ collapsed }) {
   const estado = ESTADOS_CONEXION[useConnectionStatus()]
-  const { title, detail } = estado
-
   if (collapsed) {
     return (
-      <Tooltip content={`${title} — ${detail}`} side="right" className="mx-auto">
-        <span className="grid size-10 place-items-center rounded-xl" tabIndex={0} aria-label={title}>
+      <Tooltip content={`${estado.title} — ${estado.detail}`} side="right" className="mx-auto">
+        <span className="grid size-10 place-items-center rounded-xl" tabIndex={0} aria-label={estado.title}>
           <StatusDot estado={estado} />
         </span>
       </Tooltip>
     )
   }
   return (
-    <div className="flex items-center gap-3 rounded-xl border border-line bg-surface-2/60 px-3 py-2.5">
+    <div className="flex items-center gap-2.5 px-3 py-1" aria-live="polite">
       <StatusDot estado={estado} />
-      <div className="min-w-0" aria-live="polite">
-        <p className="truncate text-xs font-semibold text-fg">{title}</p>
-        <p className="truncate text-[11px] text-fg-subtle">{detail}</p>
-      </div>
+      <p className="min-w-0 truncate text-xs text-fg-muted">
+        <span className="font-medium text-fg">{estado.title}</span>
+        {estado.detail && <span className="text-fg-subtle"> · {estado.detail}</span>}
+      </p>
     </div>
   )
 }
@@ -63,35 +62,25 @@ function NavItem({ item, collapsed, onNavigate, layoutScope }) {
       aria-label={collapsed ? item.label : undefined}
       className={({ isActive }) =>
         cn(
-          'group relative flex h-10 w-full items-center gap-3 rounded-xl text-sm font-medium transition-colors duration-150',
-          collapsed ? 'justify-center px-0' : 'px-3',
-          isActive ? 'text-primary-text' : 'text-fg-muted hover:bg-surface-2 hover:text-fg',
+          'group relative flex h-9 w-full items-center gap-3 rounded-lg text-[13.5px] font-medium transition-colors duration-150',
+          collapsed ? 'justify-center px-0' : 'px-2.5',
+          isActive ? 'text-fg' : 'text-fg-muted hover:bg-surface-2 hover:text-fg',
         )
       }
     >
       {({ isActive }) => (
         <>
           {isActive && (
-            <motion.span
-              layoutId={`nav-active-${layoutScope}`}
-              className="absolute inset-0 rounded-xl bg-primary-soft"
-              transition={{ type: 'spring', stiffness: 420, damping: 34 }}
-            />
+            <motion.span layoutId={`nav-active-${layoutScope}`} className="absolute inset-0 rounded-lg border border-line bg-surface shadow-card dark:bg-surface-2" transition={{ type: 'spring', stiffness: 460, damping: 36 }}>
+              {/* Barra de color que marca la sección activa */}
+              <span className="absolute -left-3 top-1/2 h-5 w-[3px] -translate-y-1/2 rounded-r-full bg-gradient-to-b from-primary to-primary-2 shadow-[0_0_12px_var(--primary)]" />
+            </motion.span>
           )}
-          <Icon size={18} strokeWidth={isActive ? 2.2 : 1.9} className="relative shrink-0" aria-hidden="true" />
+          <Icon size={17} strokeWidth={isActive ? 2.2 : 1.9} className={cn('relative shrink-0 transition-colors', isActive ? 'text-primary-text' : 'text-fg-subtle group-hover:text-fg-muted')} aria-hidden="true" />
           {!collapsed && (
             <>
               <span className="relative flex-1 truncate">{item.label}</span>
-              {item.unidad && (
-                <span
-                  className={cn(
-                    'relative rounded-md px-1.5 py-px text-[10px] font-semibold tracking-wide',
-                    isActive ? 'bg-surface/70 text-primary-text' : 'bg-surface-2 text-fg-subtle group-hover:bg-surface-3',
-                  )}
-                >
-                  {item.unidad}
-                </span>
-              )}
+              {item.unidad && <span className={cn('relative font-mono text-[10px] font-medium tracking-tight', isActive ? 'text-primary-text' : 'text-fg-subtle/80')}>{item.unidad}</span>}
             </>
           )}
         </>
@@ -107,11 +96,21 @@ function NavItem({ item, collapsed, onNavigate, layoutScope }) {
 }
 
 function SidebarContent({ collapsed, onNavigate, onToggle, onClose, layoutScope }) {
+  const { user } = useSession()
   return (
     <div className="flex h-full flex-col">
-      <div className={cn('flex h-16 shrink-0 items-center', collapsed ? 'justify-center px-0' : 'justify-between px-5')}>
-        <NavLink to="/" onClick={onNavigate} aria-label="Ir al dashboard" className="rounded-lg">
-          <Logo collapsed={collapsed} />
+      {/* Espacio de trabajo */}
+      <div className={cn('flex h-16 shrink-0 items-center gap-2', collapsed ? 'justify-center px-0' : 'justify-between px-4')}>
+        <NavLink to="/" onClick={onNavigate} aria-label="Ir al dashboard" className="flex min-w-0 items-center gap-2.5 rounded-lg">
+          <LogoMark size={30} className="shadow-[0_6px_16px_-6px_var(--primary)]" />
+          {!collapsed && (
+            <span className="min-w-0">
+              <span className="block truncate text-[14px] font-semibold leading-4 tracking-[-0.02em] text-fg">
+                {BRAND.nombre} <span className="font-normal text-fg-subtle">{BRAND.sufijo}</span>
+              </span>
+              <span className="block truncate text-[11px] leading-4 text-fg-subtle">{BRAND.organizacion}</span>
+            </span>
+          )}
         </NavLink>
         {onClose && (
           <button type="button" onClick={onClose} aria-label="Cerrar menú" className="grid size-9 place-items-center rounded-lg text-fg-muted hover:bg-surface-2 hover:text-fg">
@@ -120,15 +119,15 @@ function SidebarContent({ collapsed, onNavigate, onToggle, onClose, layoutScope 
         )}
       </div>
 
-      <nav aria-label="Navegación principal" className={cn('no-scrollbar flex-1 space-y-6 overflow-y-auto py-4', collapsed ? 'px-3' : 'px-3')}>
+      <nav aria-label="Navegación principal" className="no-scrollbar flex-1 space-y-5 overflow-y-auto px-3 pb-4 pt-2">
         {NAV_SECTIONS.map((section) => (
           <div key={section.titulo}>
             {collapsed ? (
               <div className="mx-auto mb-2 h-px w-6 bg-line" aria-hidden="true" />
             ) : (
-              <p className="mb-1.5 px-3 text-[11px] font-semibold uppercase tracking-[0.08em] text-fg-subtle">{section.titulo}</p>
+              <p className="mb-1 px-2.5 text-[10.5px] font-semibold uppercase tracking-[0.1em] text-fg-subtle/90">{section.titulo}</p>
             )}
-            <ul className="space-y-1">
+            <ul className="space-y-0.5">
               {section.items.map((item) => (
                 <li key={item.path}>
                   <NavItem item={item} collapsed={collapsed} onNavigate={onNavigate} layoutScope={layoutScope} />
@@ -139,36 +138,35 @@ function SidebarContent({ collapsed, onNavigate, onToggle, onClose, layoutScope 
         ))}
       </nav>
 
-      <div className="shrink-0 space-y-3 border-t border-line p-3">
+      <div className="shrink-0 space-y-2 border-t border-line p-3">
         <ConnectionStatus collapsed={collapsed} />
+        {!collapsed && user && (
+          <div className="flex items-center gap-2.5 rounded-xl border border-line bg-surface-2/60 p-2">
+            <Avatar name={user.nombre} size="sm" />
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-[13px] font-semibold leading-4 text-fg">{user.nombre}</p>
+              <p className="truncate text-[11px] leading-4 text-fg-subtle">{user.rol}</p>
+            </div>
+          </div>
+        )}
         {onToggle && (
           <button
             type="button"
             onClick={onToggle}
             aria-label={collapsed ? 'Expandir menú lateral' : 'Colapsar menú lateral'}
             aria-expanded={!collapsed}
-            className={cn(
-              'flex h-9 w-full items-center gap-3 rounded-xl text-[13px] font-medium text-fg-muted transition-colors hover:bg-surface-2 hover:text-fg',
-              collapsed ? 'justify-center' : 'px-3',
-            )}
+            className={cn('flex h-8 w-full items-center gap-2.5 rounded-lg text-[12.5px] font-medium text-fg-subtle transition-colors hover:bg-surface-2 hover:text-fg', collapsed ? 'justify-center' : 'px-2.5')}
           >
-            {collapsed ? <PanelLeftOpen size={17} aria-hidden="true" /> : <PanelLeftClose size={17} aria-hidden="true" />}
-            {!collapsed && 'Colapsar'}
+            {collapsed ? <PanelLeftOpen size={16} aria-hidden="true" /> : <PanelLeftClose size={16} aria-hidden="true" />}
+            {!collapsed && 'Colapsar menú'}
           </button>
-        )}
-        {!collapsed && (
-          <p className="px-3 pb-1 text-[11px] leading-4 text-fg-subtle">
-            {BRAND.evento} · {BRAND.carrera}
-          </p>
         )}
       </div>
     </div>
   )
 }
 
-/**
- * Sidebar: fijo y colapsable en escritorio; cajón con overlay en tablet/celular.
- */
+/** Sidebar: fijo y colapsable en escritorio; cajón con overlay en tablet/celular. */
 export function Sidebar({ collapsed, onToggle, mobileOpen, onMobileClose }) {
   useEffect(() => {
     if (!mobileOpen) return undefined
@@ -186,9 +184,9 @@ export function Sidebar({ collapsed, onToggle, mobileOpen, onMobileClose }) {
       {/* Escritorio */}
       <motion.aside
         initial={false}
-        animate={{ width: collapsed ? 68 : 260 }}
+        animate={{ width: collapsed ? 68 : 256 }}
         transition={{ duration: 0.28, ease }}
-        className="sticky top-0 z-40 hidden h-dvh shrink-0 overflow-hidden border-r border-line bg-surface lg:block"
+        className="sticky top-0 z-40 hidden h-dvh shrink-0 overflow-hidden border-r border-line bg-surface/80 backdrop-blur-xl lg:block dark:bg-[color-mix(in_srgb,var(--surface)_70%,var(--bg))]"
       >
         <SidebarContent collapsed={collapsed} onToggle={onToggle} layoutScope="desktop" />
       </motion.aside>
@@ -197,14 +195,7 @@ export function Sidebar({ collapsed, onToggle, mobileOpen, onMobileClose }) {
       <AnimatePresence>
         {mobileOpen && (
           <div className="fixed inset-0 z-50 lg:hidden">
-            <motion.div
-              className="absolute inset-0 bg-[var(--overlay)] backdrop-blur-[2px]"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={onMobileClose}
-              aria-hidden="true"
-            />
+            <motion.div className="absolute inset-0 bg-[var(--overlay)] backdrop-blur-[2px]" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={onMobileClose} aria-hidden="true" />
             <motion.aside
               role="dialog"
               aria-modal="true"

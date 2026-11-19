@@ -6,7 +6,7 @@ import { ThemeProvider } from '@/context/ThemeContext'
 import { DemoRouter } from '@/lib/DemoRouter'
 import { SessionProvider, useSession } from '@/context/SessionContext'
 import { describeError, onDataError } from '@/firebase/hooks'
-import { autoSeedIfNeeded } from '@/firebase/seed'
+import { AsegurarUsuarios } from '@/modules/usuarios/AsegurarUsuarios'
 import { Button, EmptyState, Toaster, toast } from '@/components/ui'
 import { Layout } from '@/components/layout/Layout'
 import LoginPage from '@/modules/login/LoginPage'
@@ -64,11 +64,9 @@ function DataErrorToasts() {
 // `npm run build:demo` genera un único HTML sin servidor: ahí se navega en memoria
 const Router = import.meta.env.MODE === 'demo' ? DemoRouter : BrowserRouter
 
+// Al abrir la app no se carga nada automáticamente: siempre aparece el login y los datos de
+// demo se cargan a mano (botón «Cargar datos de demo», solo para el rol Administrador).
 export default function App() {
-  useEffect(() => {
-    autoSeedIfNeeded()
-  }, [])
-
   return (
     <ThemeProvider>
       <SessionProvider>
@@ -98,6 +96,7 @@ export default function App() {
           </Router>
           <Toaster />
           <DataErrorToasts />
+          <AsegurarUsuarios />
         </MotionConfig>
       </SessionProvider>
     </ThemeProvider>

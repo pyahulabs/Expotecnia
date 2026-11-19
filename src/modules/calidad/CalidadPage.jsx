@@ -4,7 +4,7 @@ import { AnimatePresence, motion } from 'framer-motion'
 import { ArrowDown, ArrowUp, ArrowUpDown, CalendarDays, CircleCheckBig, CircleDot, Columns3, FilterX, Flame, Pencil, Plus, SearchCheck, SearchX, ShieldCheck, Table2 } from 'lucide-react'
 import { PageHeader } from '@/components/layout/PageHeader'
 import { KanbanBoard } from '@/components/kanban/KanbanBoard'
-import { Avatar, Badge, Button, Card, EmptyState, IconButton, Loading, PriorityBadge, SearchInput, Select, SkeletonKanban, StatCard, Table, TBody, TD, TH, THead, TR, Tabs, toast } from '@/components/ui'
+import { Avatar, Badge, Button, Card, EmptyState, IconButton, Loading, PriorityBadge, SearchInput, Select, SkeletonKanban, StatCard, Table, TBody, TD, TH, THead, TR, Tabs, Pagination, usePaginacion, toast } from '@/components/ui'
 import { COLECCIONES, LISTA_PRIORIDADES, PRIORIDADES } from '@/config/constants'
 import { logActivity, useCollection } from '@/firebase/hooks'
 import { diffDays, formatDate, formatPercent, normalize, todayISO } from '@/lib/format'
@@ -86,6 +86,8 @@ export default function CalidadPage() {
     const lista = [...filtradas].sort((a, b) => (valor(a) > valor(b) ? 1 : valor(a) < valor(b) ? -1 : 0))
     return orden.asc ? lista : lista.reverse()
   }, [filtradas, orden])
+
+  const paginacion = usePaginacion(ordenadas, 8)
 
   const stats = useMemo(() => {
     const contar = (estado) => data.filter((n) => n.estado === estado).length
@@ -198,6 +200,7 @@ export default function CalidadPage() {
               icon={ShieldCheck}
               title="No hay no conformidades registradas"
               description="¡Buena señal! Cuando se detecte un desvío de calidad, registralo acá para darle seguimiento."
+              demo
               action={
                 <Button icon={Plus} onClick={() => abrirNueva()}>
                   Registrar la primera
@@ -248,7 +251,7 @@ export default function CalidadPage() {
                         </tr>
                       </THead>
                       <TBody>
-                        {ordenadas.map((nc) => {
+                        {paginacion.visibles.map((nc) => {
                           const estado = estadoNC(nc.estado)
                           return (
                             <TR key={nc.id}>
@@ -282,6 +285,7 @@ export default function CalidadPage() {
                       </TBody>
                     </Table>
                   )}
+                  {ordenadas.length > 0 && <Pagination {...paginacion} nombre="no conformidades" />}
                 </Card>
               )}
             </motion.div>

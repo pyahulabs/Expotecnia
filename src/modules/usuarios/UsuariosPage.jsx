@@ -1,21 +1,22 @@
 import { useMemo, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
-import { ArrowLeftRight, Crown, Info, Pencil, SearchX, ShieldCheck, Trash2, UserCheck, UserCog, UserPlus, Users } from 'lucide-react'
+import { ArrowLeftRight, Crown, Info, Lock, Pencil, SearchX, ShieldCheck, Trash2, UserCheck, UserCog, UserPlus, Users } from 'lucide-react'
 import { PageHeader } from '@/components/layout/PageHeader'
-import { Avatar, Badge, Button, Card, Chip, ConfirmDialog, EmptyState, IconButton, Loading, SearchInput, SkeletonTable, StatCard, Table, TBody, TD, TH, THead, toast } from '@/components/ui'
+import { Avatar, Badge, Button, Card, Chip, ConfirmDialog, EmptyState, IconButton, Loading, SearchInput, SkeletonTable, StatCard, Table, TBody, TD, TH, THead, Pagination, usePaginacion, toast } from '@/components/ui'
 import { COLECCIONES, LISTA_ROLES, ROLES } from '@/config/constants'
 import { esAdministrador, useSession } from '@/context/SessionContext'
 import { logActivity, useCollection } from '@/firebase/hooks'
 import { normalize, timeAgo } from '@/lib/format'
 import { fadeUp, stagger } from '@/lib/motion'
 import { useCambiarUsuario } from '@/lib/useCambiarUsuario'
+import { antiguedad } from '@/modules/talentoHumano/desempeno'
 import { esUltimoAdmin, esUsuarioActual } from './reglas'
 import { UsuarioModal } from './UsuarioModal'
 
 export default function UsuariosPage() {
   const { data, loading, add, update, remove } = useCollection(COLECCIONES.usuarios, { orderBy: 'nombre' })
   const { user, updateSession } = useSession()
-  const cambiarUsuario = useCambiarUsuario()
+  const { cambiar: cambiarUsuario, claveModal } = useCambiarUsuario()
   const admin = esAdministrador(user)
 
   const [busqueda, setBusqueda] = useState('')
@@ -29,6 +30,7 @@ export default function UsuariosPage() {
   }, [data, busqueda, rol])
 
   const conteo = (r) => data.filter((u) => u.rol === r).length
+  const paginacion = usePaginacion(filtrados, 8)
 
   const guardar = (valores, original) => {
     if (original) {
@@ -102,7 +104,8 @@ export default function UsuariosPage() {
               <EmptyState
                 icon={UserCog}
                 title="Todavía no hay usuarios"
-                description="Creá el primer usuario o cargá los datos de demo desde el dashboard."
+                demo
+                description="Creá el primer usuario o cargá los datos de demo."
                 action={
                   admin && (
                     <Button icon={UserPlus} onClick={() => setModal({ open: true, usuario: null })}>
@@ -119,6 +122,7 @@ export default function UsuariosPage() {
                   <tr>
                     <TH>Usuario</TH>
                     <TH className="hidden md:table-cell">Cargo</TH>
+                    <TH className="hidden xl:table-cell">Contacto</TH>
                     <TH>Rol</TH>
                     <TH className="hidden sm:table-cell">Estado</TH>
                     <TH className="hidden lg:table-cell">Último acceso</TH>
@@ -129,7 +133,7 @@ export default function UsuariosPage() {
                 </THead>
                 <TBody>
                   <AnimatePresence initial={false}>
-                    {filtrados.map((u) => {
+                    {paginacion.visibles.map((u) => {
                       const actual = esUsuarioActual(user, u)
                       const inactivo = u.estado === 'Inactivo'
                       return (
@@ -142,11 +146,21 @@ export default function UsuariosPage() {
                                   {u.nombre}
                                   {actual && <Badge tone="primary" size="sm">Vos</Badge>}
                                 </p>
-                                <p className="truncate text-xs text-fg-subtle">{u.email}</p>
+                                <p className="flex items-center gap-1.5 truncate text-xs text-fg-subtle">
+                                  {u.email}
+                                  {u.claveHash && <Lock size={11} className="shrink-0" aria-label="Cuenta con contraseña" />}
+                                </p>
                               </div>
                             </div>
                           </TD>
-                          <TD className="hidden text-fg-muted md:table-cell">{u.cargo || '—'}</TD>
+                          <TD className="hidden md:table-cell">
+                            <p className="text-fg-muted">{u.cargo || '—'}</p>
+                            {u.departamento && <p className="text-xs text-fg-subtle">{u.departamento}</p>}
+                          </TD>
+                          <TD className="hidden xl:table-cell">
+                            <p className="whitespace-nowrap text-[13px] text-fg-muted">{u.telefono || '—'}</p>
+                            {u.fechaIngreso && <p className="text-xs text-fg-subtle">{antiguedad(u.fechaIngreso)} en la empresa</p>}
+                          </TD>
                           <TD>
                             <Badge tone={ROLES[u.rol]?.tone || 'neutral'} icon={u.rol === 'Administrador' ? ShieldCheck : undefined}>
                               {u.rol}
@@ -184,6 +198,7 @@ export default function UsuariosPage() {
               </Table>
             )}
           </div>
+          {!loading && filtrados.length > 0 && <Pagination {...paginacion} nombre="usuarios" />}
         </Card>
 
         <motion.section variants={fadeUp} aria-label="Roles disponibles" className="grid grid-cols-1 gap-4 md:grid-cols-3">
@@ -198,6 +213,7 @@ export default function UsuariosPage() {
         </motion.section>
       </motion.div>
 
+      {claveModal}
       <UsuarioModal
         open={modal.open}
         usuario={modal.usuario}

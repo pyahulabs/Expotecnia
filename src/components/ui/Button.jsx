@@ -6,11 +6,11 @@ import { Tooltip } from './Tooltip'
 
 const VARIANTS = {
   primary:
-    'bg-primary text-white shadow-[inset_0_1px_0_rgb(255_255_255/0.18),0_1px_2px_rgb(27_25_23/0.24)] hover:bg-primary-hover',
+    'shine relative overflow-hidden bg-brand-button text-white shadow-[inset_0_1px_0_rgb(255_255_255/0.22),0_1px_2px_rgb(16_16_23/0.25),0_8px_20px_-10px_var(--primary)] hover:shadow-[inset_0_1px_0_rgb(255_255_255/0.22),0_1px_2px_rgb(16_16_23/0.25),0_12px_26px_-10px_var(--primary)]',
   secondary: 'bg-surface text-fg border border-line shadow-card hover:bg-surface-2 hover:border-line-strong',
   soft: 'bg-primary-soft text-primary-text hover:bg-primary/20',
   ghost: 'text-fg-muted hover:bg-surface-2 hover:text-fg',
-  danger: 'bg-danger text-white shadow-[0_1px_2px_rgb(27_25_23/0.24)] hover:brightness-95',
+  danger: 'bg-danger text-white shadow-[inset_0_1px_0_rgb(255_255_255/0.18),0_1px_2px_rgb(16_16_23/0.25)] hover:bg-danger/90',
 }
 
 const SIZES = {
@@ -35,10 +35,11 @@ export const Button = forwardRef(function Button(
       ref={ref}
       type={type}
       disabled={isDisabled}
-      whileTap={isDisabled ? undefined : { scale: 0.97 }}
+      whileHover={isDisabled ? undefined : { y: -1 }}
+      whileTap={isDisabled ? undefined : { scale: 0.97, y: 0 }}
       transition={{ type: 'spring', stiffness: 500, damping: 30 }}
       className={cn(
-        'inline-flex shrink-0 select-none items-center justify-center whitespace-nowrap font-medium transition-colors duration-150',
+        'inline-flex shrink-0 select-none items-center justify-center whitespace-nowrap font-medium transition-[background-color,border-color,color,box-shadow] duration-150',
         'disabled:cursor-not-allowed disabled:opacity-55',
         VARIANTS[variant],
         SIZES[size],

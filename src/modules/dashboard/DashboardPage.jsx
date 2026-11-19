@@ -3,8 +3,8 @@ import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { ArrowUpRight, ChartColumn, ChartLine, DatabaseZap, FolderKanban, PieChart as PieIcon, PlugZap, Radar as RadarIcon, ShieldCheck, Smile, Star, Users, Wallet } from 'lucide-react'
 import { PageHeader } from '@/components/layout/PageHeader'
-import { Badge, Button, Card, CardBody, CardHeader, EmptyState, Loading, SkeletonChart, StatCard } from '@/components/ui'
-import { useSession } from '@/context/SessionContext'
+import { Badge, Button, Card, CardBody, CardHeader, CargarDemoBoton, EmptyState, Loading, SkeletonChart, StatCard } from '@/components/ui'
+import { esAdministrador, useSession } from '@/context/SessionContext'
 import { useDemoActions } from '@/lib/useDemoActions'
 import { fadeUp, stagger } from '@/lib/motion'
 import { formatDecimal, formatNumber, formatPercent, sum } from '@/lib/format'
@@ -55,7 +55,7 @@ function VerMas({ to, children }) {
 
 export default function DashboardPage() {
   const { user } = useSession()
-  const { seed, seeding, test, testing } = useDemoActions()
+  const { test, testing } = useDemoActions()
   const { loading, vacio, kpis, tickets, climaPorDimension, respuestasClima, presupuestos, costos } = useDashboardData()
   const [escenario, setEscenario] = useState(ESCENARIO_BASE)
 
@@ -79,9 +79,7 @@ export default function DashboardPage() {
             <Button variant="secondary" icon={PlugZap} loading={testing} onClick={test}>
               Probar conexión
             </Button>
-            <Button icon={DatabaseZap} loading={seeding} onClick={seed}>
-              Cargar datos de demo
-            </Button>
+            <CargarDemoBoton />
           </>
         }
       />
@@ -91,12 +89,8 @@ export default function DashboardPage() {
           <EmptyState
             icon={DatabaseZap}
             title="Tu espacio de trabajo está vacío"
-            description="Cargá los datos de demostración para ver el dashboard, los gráficos y todos los módulos con información realista."
-            action={
-              <Button icon={DatabaseZap} loading={seeding} onClick={seed}>
-                Cargar datos de demo
-              </Button>
-            }
+            description={esAdministrador(user) ? "Cargá los datos de demostración para ver el dashboard, los gráficos y todos los módulos con información realista." : "Todavía no hay datos. Pedile a un administrador que cargue los datos de demostración."}
+            demo
           />
         </Card>
       ) : (

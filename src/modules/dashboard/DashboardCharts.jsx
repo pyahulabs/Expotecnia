@@ -59,6 +59,16 @@ export function BudgetChart({ data, proyectado }) {
         >
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={rows} barGap={2} barCategoryGap="22%" margin={{ top: 8, right: 4, bottom: 0, left: 0 }}>
+              <defs>
+                <linearGradient id="grad-presupuesto" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="var(--chart-1)" />
+                  <stop offset="100%" stopColor="var(--chart-1)" stopOpacity="0.7" />
+                </linearGradient>
+                <linearGradient id="grad-ejecutado" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="var(--chart-2)" />
+                  <stop offset="100%" stopColor="var(--chart-2)" stopOpacity="0.7" />
+                </linearGradient>
+              </defs>
               <CartesianGrid {...gridProps} />
               <XAxis dataKey="corto" {...axisProps} interval={0} tickMargin={8} />
               <YAxis {...axisProps} width={56} tickFormatter={(v) => formatGsCompact(v, false)} />
@@ -80,9 +90,9 @@ export function BudgetChart({ data, proyectado }) {
                   />
                 }
               />
-              <Bar dataKey="presupuesto" name="Presupuesto" fill="var(--chart-1)" radius={[4, 4, 0, 0]} maxBarSize={barSize} {...ANIM} />
+              <Bar dataKey="presupuesto" name="Presupuesto" fill="url(#grad-presupuesto)" radius={[4, 4, 0, 0]} maxBarSize={barSize} {...ANIM} />
               {proyectado && <Bar dataKey="presupuestoProy" name="Presupuesto proyectado" fill="var(--chart-1)" fillOpacity={0.4} radius={[4, 4, 0, 0]} maxBarSize={barSize} {...ANIM} animationDuration={450} />}
-              <Bar dataKey="ejecutado" name="Ejecutado" fill="var(--chart-2)" radius={[4, 4, 0, 0]} maxBarSize={barSize} {...ANIM} />
+              <Bar dataKey="ejecutado" name="Ejecutado" fill="url(#grad-ejecutado)" radius={[4, 4, 0, 0]} maxBarSize={barSize} {...ANIM} />
               {proyectado && <Bar dataKey="ejecutadoProy" name="Ejecutado proyectado" fill="var(--chart-2)" fillOpacity={0.4} radius={[4, 4, 0, 0]} maxBarSize={barSize} {...ANIM} animationDuration={450} />}
             </BarChart>
           </ResponsiveContainer>
@@ -183,7 +193,7 @@ export function TicketsChart({ data }) {
                 </span>
               </div>
               <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-surface-3">
-                <div className="h-full rounded-full transition-[width] duration-700" style={{ width: `${pct}%`, background: d.color }} />
+                <div className="h-full w-full origin-left rounded-full transition-transform duration-700" style={{ transform: `scaleX(${pct / 100})`, background: d.color }} />
               </div>
             </li>
           )

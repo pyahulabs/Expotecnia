@@ -2,9 +2,10 @@
 // Los ids son fijos: volver a cargar el seed restablece estos documentos sin duplicarlos.
 
 import { CLIMA_PREGUNTAS, COLECCIONES, CRITERIOS_DESEMPENO, EMPRESAS } from '@/config/constants'
+import { CLAVE_DEMO_HASH, USUARIOS_BASE, VERSION_CORREOS } from '@/config/usuarios'
 import { addDays, toISODate } from '@/lib/format'
-import { clearCollections, dataMode, setMany } from './hooks'
-import { baseWasSeeded, markBaseSeeded, markSeeded, wasSeeded } from './localStore'
+import { clearCollections, setMany, updateItem } from './hooks'
+import { markBaseSeeded, markSeeded } from './localStore'
 
 // Generador pseudoaleatorio con semilla: siempre produce los mismos datos.
 const mulberry32 = (seed) => () => {
@@ -182,18 +183,36 @@ const ACTIVIDAD = [
   ['Proyectos', 'completó la fase «Desarrollo del núcleo»', 'mover', 'Derlis Ayala', 8 * 24 * HORA],
 ]
 
-// Usuarios del sistema: [id, nombre, cargo, rol, estado]
-const USUARIOS = [
-  ['usr-01', 'María José Benítez', 'Gerente General', 'Administrador', 'Activo'],
-  ['usr-02', 'Derlis Ayala', 'Jefe de Tecnología', 'Administrador', 'Activo'],
-  ['usr-03', 'Carlos Giménez', 'Jefe de Finanzas', 'Editor', 'Activo'],
-  ['usr-04', 'Nathalia Duarte', 'Jefa de Talento Humano', 'Editor', 'Activo'],
-  ['usr-05', 'Gloria Ortiz', 'Jefa de Calidad', 'Editor', 'Activo'],
-  ['usr-06', 'Andrea Galeano', 'Jefa Comercial', 'Lector', 'Activo'],
-  ['usr-07', 'Óscar Cabañas', 'Analista de Soporte', 'Lector', 'Inactivo'],
-]
+/** Documento de un usuario base (con la contraseña de demostración y el formato de correo vigente). */
+const docUsuario = ({ id, ...data }, i, now = Date.now()) => ({
+  name: COLECCIONES.usuarios,
+  id,
+  data: { ...data, claveHash: CLAVE_DEMO_HASH, versionCorreo: VERSION_CORREOS, createdAt: now - (USUARIOS_BASE.length - i) * MIN },
+})
 
-const slugEmail = (text) => text.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, '.').replace(/^\.|\.$/g, '')
+/**
+ * Se asegura de que los usuarios base existan en la colección `usuarios` (se llama al abrir la app).
+ *  - Crea los que faltan (no existe ni el id ni el correo).
+ *  - A los que ya existían de una versión anterior les actualiza, UNA sola vez, el correo al formato
+ *    nombre.apellido@gmail.com y la contraseña de demostración. Después se respetan los cambios.
+ * Devuelve cuántos documentos creó o actualizó.
+ */
+export async function asegurarUsuariosBase(existentes) {
+  const porId = new Map(existentes.map((u) => [u.id, u]))
+  const correos = new Set(existentes.map((u) => String(u.email || '').trim().toLowerCase()))
+  const faltan = USUARIOS_BASE.map((u, i) => docUsuario(u, i)).filter((item) => !porId.has(item.id) && !correos.has(item.data.email))
+  if (faltan.length) await setMany(faltan)
+
+  const desactualizados = USUARIOS_BASE.filter((u) => porId.has(u.id) && porId.get(u.id).versionCorreo !== VERSION_CORREOS)
+  await Promise.all(
+    desactualizados.map((u) => {
+      const actual = porId.get(u.id)
+      const perfil = Object.fromEntries(['telefono', 'departamento', 'fechaIngreso'].filter((c) => u[c] && !actual[c]).map((c) => [c, u[c]]))
+      return updateItem(COLECCIONES.usuarios, u.id, { ...perfil, email: u.email, claveHash: CLAVE_DEMO_HASH, versionCorreo: VERSION_CORREOS })
+    }),
+  )
+  return faltan.length + desactualizados.length
+}
 
 /** Empresas de ejemplo (Planeación) y usuarios (Usuarios): la base para poder ingresar y trabajar. */
 export function buildBaseData() {
@@ -203,15 +222,7 @@ export function buildBaseData() {
     const { id, ...data } = empresa
     items.push({ name: COLECCIONES.empresas, id, data: { ...data, createdAt: now - (EMPRESAS.length - i) * MIN } })
   })
-  USUARIOS.forEach(([id, nombre, cargo, rol, estado], i) => {
-    const partes = nombre.split(' ')
-    items.push({
-      name: COLECCIONES.usuarios,
-      id,
-      data: { nombre, cargo, rol, estado, email: `${slugEmail(partes[0])}.${slugEmail(partes[partes.length - 1])}@yvoty.com.py`, createdAt: now - (USUARIOS.length - i) * HORA },
-    })
-  })
-  return items
+  return [...items, ...USUARIOS_BASE.map((u, i) => docUsuario(u, i, now))]
 }
 
 /** Arma la lista completa de documentos: [{ name, id, data }] */
@@ -373,17 +384,4 @@ export async function clearDemoData() {
   // Los usuarios y las empresas se conservan: sin usuarios no habría con quién ingresar
   await clearCollections(COLECCIONES_DEMO.filter((c) => c !== COLECCIONES.usuarios && c !== COLECCIONES.empresas))
   markSeeded()
-}
-
-/** En modo local, la primera vez se cargan los datos solos para que la demo arranque completa. */
-export function autoSeedIfNeeded() {
-  if (dataMode !== 'local') return
-  if (!wasSeeded()) {
-    seedDemoData().catch(() => {})
-  } else if (!baseWasSeeded()) {
-    // Quien ya tenía datos de una versión anterior recibe solo las empresas y los usuarios nuevos
-    setMany(buildBaseData())
-      .then(markBaseSeeded)
-      .catch(() => {})
-  }
 }
